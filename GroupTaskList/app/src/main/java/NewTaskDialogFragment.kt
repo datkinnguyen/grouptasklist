@@ -11,7 +11,7 @@ import java.lang.ClassCastException
 class NewTaskDialogFragment : DialogFragment() {
 
     interface NewTaskDialogListener {
-        fun onDialogPositiveClick(dialog: DialogFragment, task: String)
+        fun onDialogPositiveClick(dialog: DialogFragment, taskDesc: String)
         fun onDialogNegativeClick(dialog: DialogFragment)
     }
 

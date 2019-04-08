@@ -1,5 +1,9 @@
 package com.flinders.nguy1025.grouptasklist
 
+import android.arch.persistence.db.SupportSQLiteDatabase
+import android.arch.persistence.room.Room
+import android.arch.persistence.room.migration.Migration
+import android.os.AsyncTask
 import android.os.Bundle
 import android.support.design.widget.Snackbar
 import android.support.v4.app.DialogFragment
@@ -7,7 +11,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.AdapterView
-import android.widget.ArrayAdapter
 import android.widget.ListView
 
 import kotlinx.android.synthetic.main.activity_main.*
@@ -20,18 +23,29 @@ class MainActivity : AppCompatActivity(), NewTaskDialogFragment.NewTaskDialogLis
     private val updateTaskFragmentTag = "updatetask"
     private val fm = supportFragmentManager
 
-    private var todoListItems = ArrayList<String>()
-    private var listAdapter: ArrayAdapter<String>? = null
+    private var todoListItems = ArrayList<Task>()
+    private var listAdapter: TaskListAdapter? = null
 
     private var listView: ListView? = null
 
     private var showMenuItems = false
     private var selectedItem = selectedIndexInvalid
 
+    private var database: AppDatabase? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setSupportActionBar(toolbar)
+
+        database = Room.databaseBuilder(applicationContext, AppDatabase::class.java, TodoListDBContract.DATABASE_NAME)
+            .addMigrations(object :
+                Migration(TodoListDBContract.DATABASE_VERSION - 1, TodoListDBContract.DATABASE_VERSION) {
+                override fun migrate(database: SupportSQLiteDatabase) {
+                    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+                }
+            })
+            .build()
 
         // find views
         listView = findViewById(R.id.list_view)
@@ -41,10 +55,8 @@ class MainActivity : AppCompatActivity(), NewTaskDialogFragment.NewTaskDialogLis
         listView?.onItemClickListener = AdapterView.OnItemClickListener(function = { parent, view, position, id ->
 
             if (selectedItem == position) {
-                selectedItem = selectedIndexInvalid
 
-                listView?.setSelector(android.R.color.transparent)
-
+                clearSelected()
                 hideMenu()
             } else {
                 listView?.setSelector(android.R.color.holo_blue_light)
@@ -58,7 +70,10 @@ class MainActivity : AppCompatActivity(), NewTaskDialogFragment.NewTaskDialogLis
     }
 
     private fun populateListView() {
-        listAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, todoListItems)
+        todoListItems =
+            RetrieveTasksAsyncTask(database).execute().get() as ArrayList<Task>
+
+        listAdapter = TaskListAdapter(this, todoListItems)
         listView?.adapter = listAdapter
     }
 
@@ -81,9 +96,11 @@ class MainActivity : AppCompatActivity(), NewTaskDialogFragment.NewTaskDialogLis
 
         val editItem = menu.findItem(R.id.edit_item)
         val deleteItem = menu.findItem(R.id.delete_item)
+        val markDoneItem = menu.findItem(R.id.mark_as_done_item)
 
         editItem.isVisible = showMenuItems
         deleteItem.isVisible = showMenuItems
+        markDoneItem.isVisible = showMenuItems
 
         return true
     }
@@ -95,23 +112,43 @@ class MainActivity : AppCompatActivity(), NewTaskDialogFragment.NewTaskDialogLis
         return when (item.itemId) {
             R.id.edit_item -> {
                 val fragment =
-                    NewTaskDialogFragment.newInstance(R.string.update_task_dialog_title, todoListItems[selectedItem])
+                    NewTaskDialogFragment.newInstance(
+                        R.string.update_task_dialog_title,
+                        todoListItems[selectedItem].taskDetails
+                    )
                 fragment.show(fm, updateTaskFragmentTag)
                 return true
             }
             R.id.delete_item -> {
+                val selectedTask = todoListItems[selectedItem]
+                DeleteTaskAsyncTask(database, selectedTask).execute()
+
                 todoListItems.removeAt(selectedItem)
-                listView?.clearChoices()
                 listAdapter?.notifyDataSetChanged()
 
                 // reset
-                selectedItem = selectedIndexInvalid
+                clearSelected()
 
-
-
-                showSnackbarMessage("Task deleted successfully!", "Action")
+                showSnackbarMessage(resources.getString(R.string.text_deleted_done), "Action")
 
                 hideMenu()
+                return true
+            }
+            R.id.mark_as_done_item -> {
+                // Assume we allow un-done task
+                val selectedTask = todoListItems[selectedItem]
+
+                selectedTask.completed = selectedTask.completed?.not()
+
+                UpdateTaskAsyncTask(database, selectedTask).execute()
+                listAdapter?.notifyDataSetChanged()
+
+                if (selectedTask.completed == true) {
+                    showSnackbarMessage(resources.getString(R.string.text_mark_completed_done), "Action")
+                } else {
+                    showSnackbarMessage(resources.getString(R.string.text_mark_uncompleted_done), "Action")
+                }
+
                 return true
             }
             else -> super.onOptionsItemSelected(item)
@@ -120,7 +157,6 @@ class MainActivity : AppCompatActivity(), NewTaskDialogFragment.NewTaskDialogLis
 
     private fun showSnackbarMessage(text: String, action: String) {
         Snackbar.make(fab, text, Snackbar.LENGTH_LONG).setAction(action, null).show()
-
     }
 
     private fun hideMenu() {
@@ -128,22 +164,37 @@ class MainActivity : AppCompatActivity(), NewTaskDialogFragment.NewTaskDialogLis
         invalidateOptionsMenu()
     }
 
-    override fun onDialogPositiveClick(dialog: DialogFragment, task: String) {
+    private fun clearSelected() {
+        selectedItem = selectedIndexInvalid
+        listView?.setSelector(android.R.color.transparent)
+    }
+
+    override fun onDialogPositiveClick(dialog: DialogFragment, taskDesc: String) {
 
         if (dialog.tag == newTaskFragmentTag) {
-            todoListItems.add(task)
-            listAdapter?.notifyDataSetChanged()
-            selectedItem = selectedIndexInvalid
+            val addNewTask = Task(taskDesc)
 
-            showSnackbarMessage("Task Added Successfully!", "Action")
+            addNewTask.taskId = AddTaskAsyncTask(database, addNewTask).execute().get()
+
+            todoListItems.add(addNewTask)
+            listAdapter?.notifyDataSetChanged()
+
+            clearSelected()
+
+            hideMenu()
+
+            showSnackbarMessage(resources.getString(R.string.text_created_done), "Action")
         } else if (dialog.tag == updateTaskFragmentTag) {
-            todoListItems[selectedItem] = task
-            listView?.clearChoices()
+            val selectedTask = todoListItems[selectedItem]
+            selectedTask.taskDetails = taskDesc
+
+            UpdateTaskAsyncTask(database, selectedTask).execute()
+
             listAdapter?.notifyDataSetChanged()
-            selectedItem = selectedIndexInvalid
 
-            showSnackbarMessage("Task Updated Successfully!", "Action")
+            showSnackbarMessage(resources.getString(R.string.text_updated_done), "Action")
 
+            clearSelected()
             hideMenu()
         }
     }
@@ -151,5 +202,40 @@ class MainActivity : AppCompatActivity(), NewTaskDialogFragment.NewTaskDialogLis
     override fun onDialogNegativeClick(dialog: DialogFragment) {
 
         hideMenu()
+    }
+
+    private class RetrieveTasksAsyncTask(private val database: AppDatabase?) : AsyncTask<Void, Void, List<Task>>() {
+        override fun doInBackground(vararg params: Void): List<Task>? {
+            return database?.taskDao()?.retrieveTaskList()
+        }
+    }
+
+    private class AddTaskAsyncTask(
+        private val database: AppDatabase?,
+        private val newTask: Task
+    ) : AsyncTask<Void, Void, Long>() {
+        override fun doInBackground(vararg params: Void): Long? {
+            return database?.taskDao()?.addNewTask(newTask)
+        }
+    }
+
+    private class UpdateTaskAsyncTask(
+        private val database: AppDatabase?,
+        private val selectedTask: Task
+    ) : AsyncTask<Void, Void, Void>() {
+        override fun doInBackground(vararg params: Void): Void? {
+            database?.taskDao()?.updateTask(selectedTask)
+            return null
+        }
+    }
+
+    private class DeleteTaskAsyncTask(
+        private val database: AppDatabase?,
+        private val selectedTask: Task
+    ) : AsyncTask<Void, Void, Void>() {
+        override fun doInBackground(vararg params: Void): Void? {
+            database?.taskDao()?.deleteTask(selectedTask)
+            return null
+        }
     }
 }
