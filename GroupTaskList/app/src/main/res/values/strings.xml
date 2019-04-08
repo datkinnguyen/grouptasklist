@@ -13,15 +13,12 @@
     <string name="not_completed">Not Completed</string>
     <string name="completed">Completed</string>
 
-
     <string name="text_created_done">Task Added successfully!</string>
     <string name="text_updated_done">Task Updated successfully!</string>
     <string name="text_deleted_done">Task Deleted successfully!</string>
     <string name="text_mark_uncompleted_done">Task has been marked as Not completed!</string>
     <string name="text_mark_completed_done">Task has been marked as completed!</string>
 
-
-
-
+    <string name="text_task_text_required">ERROR! Task Description is required!</string>
 
 </resources>

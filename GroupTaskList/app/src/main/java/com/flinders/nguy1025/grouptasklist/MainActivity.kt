@@ -171,6 +171,13 @@ class MainActivity : AppCompatActivity(), NewTaskDialogFragment.NewTaskDialogLis
 
     override fun onDialogPositiveClick(dialog: DialogFragment, taskDesc: String) {
 
+        // validate task description
+        if (taskDesc.isEmpty()) {
+            // show error
+            showSnackbarMessage(resources.getString(R.string.text_task_text_required), "Action")
+            return
+        }
+
         if (dialog.tag == newTaskFragmentTag) {
             val addNewTask = Task(taskDesc)
 
@@ -201,7 +208,7 @@ class MainActivity : AppCompatActivity(), NewTaskDialogFragment.NewTaskDialogLis
 
     override fun onDialogNegativeClick(dialog: DialogFragment) {
 
-        hideMenu()
+//        hideMenu()
     }
 
     private class RetrieveTasksAsyncTask(private val database: AppDatabase?) : AsyncTask<Void, Void, List<Task>>() {
