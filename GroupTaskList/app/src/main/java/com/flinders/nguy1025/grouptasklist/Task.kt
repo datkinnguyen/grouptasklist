@@ -14,14 +14,20 @@ class Task : Serializable {
     @ColumnInfo(name = BaseColumns._ID)
     var taskId : Long? = null
 
-    @ColumnInfo(name = TodoListDBContract.TodoListItem.COLUMN_NAME_TASK)
+    @ColumnInfo(name = TodoListDBContract.TodoListItem.COLUMN_NAME_TASK_DETAIL)
     var taskDetails: String?
 
-    @ColumnInfo(name = TodoListDBContract.TodoListItem.COLUMN_NAME_TASK_DEADLINE)
+    @ColumnInfo(name = TodoListDBContract.TodoListItem.COLUMN_NAME_DEADLINE)
     var taskDeadline: String? = null
 
-    @ColumnInfo(name = TodoListDBContract.TodoListItem.COLUMN_NAME_TASK_COMPLETED)
+    @ColumnInfo(name = TodoListDBContract.TodoListItem.COLUMN_NAME_COMPLETED)
     var completed: Boolean? = false
+
+    @ColumnInfo(name = TodoListDBContract.TodoListItem.COLUMN_NAME_LATITUDE)
+    var latitude: Float? = null
+
+    @ColumnInfo(name = TodoListDBContract.TodoListItem.COLUMN_NAME_LONGITUDE)
+    var longitude: Float? = null
 
     @Ignore
     constructor(taskDetails: String?) {
@@ -35,5 +41,12 @@ class Task : Serializable {
         this.completed = completed
     }
 
+    /**
+     * Set coordinate (latitude, longitude) of task
+     */
+    fun updateCoordinate(lat: Float, long: Float) {
+        this.latitude = lat
+        this.longitude = longitude
+    }
 
 }

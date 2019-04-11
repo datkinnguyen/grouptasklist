@@ -11,9 +11,11 @@ object TodoListDBContract {
     class TodoListItem: BaseColumns {
         companion object {
             const val TABLE_NAME = "todo_list_item"
-            const val COLUMN_NAME_TASK = "task_details"
-            const val COLUMN_NAME_TASK_DEADLINE = "task_deadline"
-            const val COLUMN_NAME_TASK_COMPLETED = "task_completed"
+            const val COLUMN_NAME_TASK_DETAIL = "task_details"
+            const val COLUMN_NAME_DEADLINE = "task_deadline"
+            const val COLUMN_NAME_COMPLETED = "task_completed"
+            const val COLUMN_NAME_LATITUDE = "task_lat"
+            const val COLUMN_NAME_LONGITUDE = "task_long"
         }
     }
 
