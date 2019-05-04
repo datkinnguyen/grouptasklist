@@ -6,6 +6,7 @@ import android.arch.persistence.room.Ignore
 import android.arch.persistence.room.PrimaryKey
 import android.provider.BaseColumns
 import java.io.Serializable
+import java.util.*
 
 @Entity(tableName = TodoListDBContract.TodoListItem.TABLE_NAME)
 class Task : Serializable {
@@ -18,35 +19,51 @@ class Task : Serializable {
     var taskDetails: String?
 
     @ColumnInfo(name = TodoListDBContract.TodoListItem.COLUMN_NAME_DEADLINE)
-    var taskDeadline: String? = null
+    var deadline: Long? = null
 
     @ColumnInfo(name = TodoListDBContract.TodoListItem.COLUMN_NAME_COMPLETED)
     var completed: Boolean? = false
 
     @ColumnInfo(name = TodoListDBContract.TodoListItem.COLUMN_NAME_LATITUDE)
-    var latitude: Float? = null
+    var latitude: Double? = null
 
     @ColumnInfo(name = TodoListDBContract.TodoListItem.COLUMN_NAME_LONGITUDE)
-    var longitude: Float? = null
+    var longitude: Double? = null
+
+    @ColumnInfo(name = TodoListDBContract.TodoListItem.COLUMN_NAME_NOTES)
+    var notes: String? = null
 
     @Ignore
     constructor(taskDetails: String?) {
         this.taskDetails = taskDetails
     }
 
-    constructor(taskId: Long?, taskDetails: String?, taskDeadline: String?, completed: Boolean?) {
+    constructor(taskId: Long?, taskDetails: String?, deadline: Long?, notes: String?, completed: Boolean?) {
         this.taskId = taskId
         this.taskDetails = taskDetails
-        this.taskDeadline = taskDeadline
+        this.notes = notes
         this.completed = completed
+        this.deadline = deadline
     }
 
     /**
      * Set coordinate (latitude, longitude) of task
      */
-    fun updateCoordinate(lat: Float, long: Float) {
+    fun updateCoordinate(lat: Double, long: Double) {
         this.latitude = lat
-        this.longitude = longitude
+        this.longitude = long
     }
+
+    fun coordinateString(): String {
+        if (this.latitude != null && this.longitude != null) {
+            return this.latitude.toString() + "," + this.longitude.toString()
+        }
+        return ""
+    }
+
+    fun getDeadlineDate() : Date? {
+        return this.deadline?.let { Date(it) }
+    }
+
 
 }

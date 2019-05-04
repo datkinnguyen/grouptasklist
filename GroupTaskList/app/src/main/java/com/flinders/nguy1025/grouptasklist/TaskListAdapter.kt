@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.BaseAdapter
 import android.widget.TextView
+import java.util.*
 
 class TaskListAdapter(val context: Context, private val taskList: ArrayList<Task>) : BaseAdapter() {
 
@@ -22,7 +23,8 @@ class TaskListAdapter(val context: Context, private val taskList: ArrayList<Task
             viewHolder = ViewHolder()
             viewHolder.taskDescriptionTextView =
                 view.findViewById(R.id.task_item_description)
-            viewHolder.deadlineTextView = view.findViewById(R.id.task_item_deadline)
+            viewHolder.notesTextView = view.findViewById(R.id.tv_notes)
+            viewHolder.deadlineTextView = view.findViewById(R.id.tv_deadline)
             viewHolder.statusTextView = view.findViewById(R.id.task_item_status)
             view.tag = viewHolder
 
@@ -33,7 +35,13 @@ class TaskListAdapter(val context: Context, private val taskList: ArrayList<Task
         // populate value to task item holder
         val task = getItem(position) as Task
         viewHolder?.taskDescriptionTextView?.text = task.taskDetails
-        viewHolder?.deadlineTextView?.text = task.taskDeadline
+        viewHolder?.notesTextView?.text = task.notes
+
+        var passDeadline = ""
+        if (task?.getDeadlineDate() != null && Date().after(task?.getDeadlineDate())) {
+            passDeadline = context.resources.getString(R.string.deadline_passed)
+        }
+        viewHolder?.deadlineTextView?.text = task.getDeadlineDate()?.toString() + passDeadline
 
         if (null != task.completed && true == task.completed) {
             viewHolder?.statusTextView?.text = (context.getString(R.string.completed))
@@ -71,6 +79,7 @@ class TaskListAdapter(val context: Context, private val taskList: ArrayList<Task
     private class ViewHolder {
         var taskDescriptionTextView: TextView? = null
         var deadlineTextView: TextView? = null
+        var notesTextView: TextView? = null
         var statusTextView: TextView? = null
     }
 }

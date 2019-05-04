@@ -27,9 +27,14 @@ class MainActivity : AppCompatActivity(), NewTaskDialogFragment.NewTaskDialogLis
     private var listAdapter: TaskListAdapter? = null
 
     private var listView: ListView? = null
+    var hideCompletedItem: MenuItem? = null
+    var editItem: MenuItem? = null
+    var deleteItem: MenuItem? = null
+    var markDoneItem: MenuItem? = null
 
-    private var showMenuItems = false
     private var selectedItem = selectedIndexInvalid
+
+    private var hideCompleted: Boolean? = false
 
     private var database: AppDatabase? = null
 
@@ -85,8 +90,24 @@ class MainActivity : AppCompatActivity(), NewTaskDialogFragment.NewTaskDialogLis
 
     private fun showUpdateTaskUI(selected: Int) {
         selectedItem = selected
-        showMenuItems = true
+        switchMenuMode(1)
         invalidateOptionsMenu()
+    }
+
+    private fun switchMenuMode(mode: Int) {
+        if (mode == 0) { // normal
+            hideCompletedItem?.isVisible = true
+
+            editItem?.isVisible = false
+            deleteItem?.isVisible = false
+            markDoneItem?.isVisible = false
+        } else if (mode == 1) { // edit mode
+            hideCompletedItem?.isVisible = false
+
+            editItem?.isVisible = true
+            deleteItem?.isVisible = true
+            markDoneItem?.isVisible = true
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -94,13 +115,16 @@ class MainActivity : AppCompatActivity(), NewTaskDialogFragment.NewTaskDialogLis
         val inflater = menuInflater
         inflater.inflate(R.menu.task_list_menu, menu)
 
-        val editItem = menu.findItem(R.id.edit_item)
-        val deleteItem = menu.findItem(R.id.delete_item)
-        val markDoneItem = menu.findItem(R.id.mark_as_done_item)
+        hideCompletedItem = menu.findItem(R.id.hide_completed_item)
+        editItem = menu.findItem(R.id.edit_item)
+        deleteItem = menu.findItem(R.id.delete_item)
+        markDoneItem = menu.findItem(R.id.mark_as_done_item)
 
-        editItem.isVisible = showMenuItems
-        deleteItem.isVisible = showMenuItems
-        markDoneItem.isVisible = showMenuItems
+        if (selectedItem == selectedIndexInvalid) {
+            switchMenuMode(0)
+        } else {
+            switchMenuMode(1)
+        }
 
         return true
     }
@@ -114,7 +138,7 @@ class MainActivity : AppCompatActivity(), NewTaskDialogFragment.NewTaskDialogLis
                 val fragment =
                     NewTaskDialogFragment.newInstance(
                         R.string.update_task_dialog_title,
-                        todoListItems[selectedItem].taskDetails
+                        todoListItems[selectedItem]
                     )
                 fragment.show(fm, updateTaskFragmentTag)
                 return true
@@ -151,6 +175,17 @@ class MainActivity : AppCompatActivity(), NewTaskDialogFragment.NewTaskDialogLis
 
                 return true
             }
+            R.id.hide_completed_item -> {
+
+                // toggle hiding
+                hideCompleted = hideCompleted?.not()
+                todoListItems.clear()
+                todoListItems.addAll(
+                    RetrieveTasksAsyncTask(database, hideCompleted).execute().get() as ArrayList<Task>)
+                listAdapter?.notifyDataSetChanged()
+
+                return true
+            }
             else -> super.onOptionsItemSelected(item)
         }
     }
@@ -160,7 +195,7 @@ class MainActivity : AppCompatActivity(), NewTaskDialogFragment.NewTaskDialogLis
     }
 
     private fun hideMenu() {
-        showMenuItems = false
+        switchMenuMode(0)
         invalidateOptionsMenu()
     }
 
@@ -169,21 +204,20 @@ class MainActivity : AppCompatActivity(), NewTaskDialogFragment.NewTaskDialogLis
         listView?.setSelector(android.R.color.transparent)
     }
 
-    override fun onDialogPositiveClick(dialog: DialogFragment, taskDesc: String) {
+    override fun onDialogPositiveClick(dialog: DialogFragment, task: Task?) {
 
         // validate task description
-        if (taskDesc.isEmpty()) {
+        if (task?.taskDetails!!.isEmpty()) {
             // show error
             showSnackbarMessage(resources.getString(R.string.text_task_text_required), "Action")
             return
         }
 
         if (dialog.tag == newTaskFragmentTag) {
-            val addNewTask = Task(taskDesc)
 
-            addNewTask.taskId = AddTaskAsyncTask(database, addNewTask).execute().get()
+            task.taskId = AddTaskAsyncTask(database, task).execute().get()
 
-            todoListItems.add(addNewTask)
+            todoListItems.add(task)
             listAdapter?.notifyDataSetChanged()
 
             clearSelected()
@@ -192,10 +226,9 @@ class MainActivity : AppCompatActivity(), NewTaskDialogFragment.NewTaskDialogLis
 
             showSnackbarMessage(resources.getString(R.string.text_created_done), "Action")
         } else if (dialog.tag == updateTaskFragmentTag) {
-            val selectedTask = todoListItems[selectedItem]
-            selectedTask.taskDetails = taskDesc
+            todoListItems[selectedItem] = task
 
-            UpdateTaskAsyncTask(database, selectedTask).execute()
+            UpdateTaskAsyncTask(database, task).execute()
 
             listAdapter?.notifyDataSetChanged()
 
@@ -211,9 +244,13 @@ class MainActivity : AppCompatActivity(), NewTaskDialogFragment.NewTaskDialogLis
 //        hideMenu()
     }
 
-    private class RetrieveTasksAsyncTask(private val database: AppDatabase?) : AsyncTask<Void, Void, List<Task>>() {
+    private class RetrieveTasksAsyncTask(private val database: AppDatabase?, private val hideCompleted: Boolean?=false) : AsyncTask<Void, Void, List<Task>>() {
         override fun doInBackground(vararg params: Void): List<Task>? {
-            return database?.taskDao()?.retrieveTaskList()
+            if (hideCompleted == true) {
+                return database?.taskDao()?.retrieveUnfinishedTaskList()
+            } else {
+                return database?.taskDao()?.retrieveTaskList()
+            }
         }
     }
 

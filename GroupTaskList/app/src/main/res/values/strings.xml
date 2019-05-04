@@ -12,6 +12,7 @@
     <string name="mark_as_done">Mark as done</string>
     <string name="not_completed">Not Completed</string>
     <string name="completed">Completed</string>
+    <string name="deadline_passed">(Passed)</string>
 
     <string name="text_created_done">Task Added successfully!</string>
     <string name="text_updated_done">Task Updated successfully!</string>
@@ -21,4 +22,15 @@
 
     <string name="text_task_text_required">ERROR! Task Description is required!</string>
 
+    <string name="hint_task_name">Enter task name here</string>
+    <string name="hint_task_notes">note here...</string>
+
+    <string name="no_location_detected">
+        No location detected. Make sure location is enabled on the device.
+    </string>
+
+    <string name="permission_rationale">Location permission is needed for core functionality</string>
+    <string name="permission_denied_explanation">Permission was denied, but is needed for core
+        functionality.</string>
+    <string name="settings">Settings</string>
 </resources>

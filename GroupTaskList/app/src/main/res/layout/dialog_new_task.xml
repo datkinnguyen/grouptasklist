@@ -9,12 +9,52 @@
             android:layout_height="wrap_content"
             android:inputType="text"
             android:ems="10"
-            android:id="@+id/task" tools:text="Some text here"/>
+            android:id="@+id/tv_task"
+            android:hint="@string/hint_task_name"
+            tools:text="Some text here"/>
 
-    <Button android:id="@+id/tv_gps"
-              android:layout_width="wrap_content"
-              android:layout_height="wrap_content"
-              android:textSize="16sp"
-              android:clickable="true"
-              android:text="Attach GPS"/>
+    <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textMultiLine"
+            android:ems="10"
+            android:id="@+id/tv_notes"
+            android:hint="@string/hint_task_notes"
+            tools:text="Some text here"/>
+
+    <LinearLayout android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:orientation="horizontal">
+
+        <Button android:id="@+id/btn_deadline"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:clickable="true"
+                android:text="Set Deadline"/>
+
+        <TextView android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:id="@+id/tv_deadline"/>
+
+    </LinearLayout>
+
+    <LinearLayout android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:orientation="horizontal">
+
+        <Button android:id="@+id/btn_gps"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:clickable="true"
+                android:text="Attach GPS"/>
+
+        <TextView android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:id="@+id/tv_gps"/>
+
+    </LinearLayout>
+
+
 </LinearLayout>

@@ -2,6 +2,13 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
+            android:id="@+id/hide_completed_item"
+            android:title="@string/edit"
+            android:icon="@android:drawable/ic_menu_view"
+            android:visible="false"
+            app:showAsAction="always"/>
+
+    <item
             android:id="@+id/edit_item"
             android:title="@string/edit"
             android:icon="@android:drawable/ic_menu_edit"
