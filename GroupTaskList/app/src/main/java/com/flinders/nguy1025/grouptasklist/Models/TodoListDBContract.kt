@@ -1,4 +1,4 @@
-package com.flinders.nguy1025.grouptasklist
+package com.flinders.nguy1025.grouptasklist.Models
 
 import android.provider.BaseColumns
 
@@ -18,6 +18,14 @@ object TodoListDBContract {
             const val COLUMN_NAME_LONGITUDE = "task_long"
             const val COLUMN_NAME_NOTES = "notes"
             const val COLUMN_NAME_IMAGE = "image"
+            const val COLUMN_NAME_FOLDER_ID = "folder_id"
+        }
+    }
+
+    class TodoListFolder: BaseColumns {
+        companion object {
+            const val TABLE_NAME = "folders"
+            const val COLUMN_NAME_NAME = "name"
         }
     }
 

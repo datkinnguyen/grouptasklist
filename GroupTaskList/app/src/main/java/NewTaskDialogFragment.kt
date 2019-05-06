@@ -7,7 +7,6 @@ import android.app.TimePickerDialog
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
-import android.location.Location
 import android.os.Bundle
 import android.support.v4.app.ActivityCompat
 import android.support.v4.app.DialogFragment
@@ -15,11 +14,9 @@ import android.support.v4.app.Fragment
 import android.support.v4.content.ContextCompat
 import android.util.Log
 import android.widget.*
-import com.flinders.nguy1025.grouptasklist.MapsActivity
+import com.flinders.nguy1025.grouptasklist.Activities.MapsActivity
+import com.flinders.nguy1025.grouptasklist.Models.Task
 import com.flinders.nguy1025.grouptasklist.R
-import com.flinders.nguy1025.grouptasklist.Task
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationServices
 import pl.aprilapps.easyphotopicker.DefaultCallback
 import pl.aprilapps.easyphotopicker.EasyImage
 import java.io.File
@@ -57,20 +54,9 @@ class NewTaskDialogFragment : DialogFragment() {
     private val REQUEST_PERMISSIONS_REQUEST_CODE = 100
     private val REQUEST_CAMERA_REQUEST_CODE = 10
 
-
     private var newTaskDialogListener: NewTaskDialogListener? = null
     private var task: Task? = null
     private var imageFile: File? = null
-
-    /**
-     * Provides the entry point to the Fused Location Provider API.
-     */
-    private var mFusedLocationClient: FusedLocationProviderClient? = null
-
-    /**
-     * Represents a geographical location.
-     */
-    protected var mLastLocation: Location? = null
 
     var tvTask: EditText? = null
     var tvNotes: EditText? = null
@@ -85,8 +71,6 @@ class NewTaskDialogFragment : DialogFragment() {
 
         val title = arguments!!.getInt(argTitle)
         this.task = arguments!!.getSerializable(argTask) as Task?
-
-        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(activity as Activity)
 
         val builder = AlertDialog.Builder(this.activity!!).setTitle(title)
 
@@ -113,7 +97,7 @@ class NewTaskDialogFragment : DialogFragment() {
             updateGPSText()
             updateImage()
         } else {
-            this.task = Task("")
+            this.task = Task("", 0)
         }
 
         btnImage?.setOnClickListener { v ->
@@ -275,7 +259,7 @@ class NewTaskDialogFragment : DialogFragment() {
         try {
             newTaskDialogListener = activity as NewTaskDialogListener
         } catch (e: ClassCastException) {
-            throw ClassCastException(activity.toString() + " must implement NewTaskDialogListener")
+            throw ClassCastException(activity.toString() + " must implement NewFolderDialogListener")
         }
 
     }

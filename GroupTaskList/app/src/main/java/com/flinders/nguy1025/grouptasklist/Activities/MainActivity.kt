@@ -1,47 +1,50 @@
-package com.flinders.nguy1025.grouptasklist
+package com.flinders.nguy1025.grouptasklist.Activities
 
+import NewFolderDialogFragment
 import android.arch.persistence.db.SupportSQLiteDatabase
 import android.arch.persistence.room.Room
 import android.arch.persistence.room.migration.Migration
+import android.content.Intent
 import android.os.AsyncTask
 import android.os.Bundle
 import android.support.design.widget.Snackbar
 import android.support.v4.app.DialogFragment
-import android.support.v7.app.AppCompatActivity;
+import android.support.v7.app.AppCompatActivity
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.AdapterView
 import android.widget.ListView
-
+import com.flinders.nguy1025.grouptasklist.Adapters.FolderListAdapter
+import com.flinders.nguy1025.grouptasklist.Models.AppDatabase
+import com.flinders.nguy1025.grouptasklist.Models.Folder
+import com.flinders.nguy1025.grouptasklist.Models.TodoListDBContract
+import com.flinders.nguy1025.grouptasklist.R
 import kotlinx.android.synthetic.main.activity_main.*
-import java.util.ArrayList
+import java.util.*
 
-class MainActivity : AppCompatActivity(), NewTaskDialogFragment.NewTaskDialogListener {
+class MainActivity : AppCompatActivity(), NewFolderDialogFragment.NewFolderDialogListener {
 
     private val selectedIndexInvalid = -1
-    private val newTaskFragmentTag = "newtask"
-    private val updateTaskFragmentTag = "updatetask"
+    private val newFolderFragmentTag = "new_folder"
+    private val updateFolderFragmentTag = "update_folder"
     private val fm = supportFragmentManager
 
-    private var todoListItems = ArrayList<Task>()
-    private var listAdapter: TaskListAdapter? = null
+    private var todoListFolders = ArrayList<Folder>()
+    private var listAdapter: FolderListAdapter? = null
 
     private var listView: ListView? = null
-    var hideCompletedItem: MenuItem? = null
     var editItem: MenuItem? = null
     var deleteItem: MenuItem? = null
-    var markDoneItem: MenuItem? = null
 
     private var selectedItem = selectedIndexInvalid
 
-    private var hideCompleted: Boolean? = false
-
-    private var database: AppDatabase? = null
+    companion object {
+        var database: AppDatabase? = null
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        setSupportActionBar(toolbar)
 
         database = Room.databaseBuilder(applicationContext, AppDatabase::class.java, TodoListDBContract.DATABASE_NAME)
             .addMigrations(object :
@@ -58,7 +61,7 @@ class MainActivity : AppCompatActivity(), NewTaskDialogFragment.NewTaskDialogLis
 
         populateListView()
 
-        listView?.onItemClickListener = AdapterView.OnItemClickListener(function = { parent, view, position, id ->
+        listView?.onItemLongClickListener = AdapterView.OnItemLongClickListener(function = { parent, view, position, id ->
 
             if (selectedItem == position) {
 
@@ -66,60 +69,68 @@ class MainActivity : AppCompatActivity(), NewTaskDialogFragment.NewTaskDialogLis
                 hideMenu()
             } else {
                 listView?.setSelector(android.R.color.holo_blue_light)
-                showUpdateTaskUI(position)
+                showUpdateUI(position)
+                showUpdateUI(position)
             }
         })
 
+        listView?.onItemClickListener = AdapterView.OnItemClickListener(function = { parent, view, position, id ->
+
+            // open folder detail screen
+            val intent = Intent(this, FolderDetailActivity::class.java)
+            var folderId = this.todoListFolders[position].folderId!!
+
+            intent.putExtra(FolderDetailActivity.folderIdExtraKey, folderId)
+            startActivity(intent)
+
+            clearSelected()
+            hideMenu()
+        })
+
         fab.setOnClickListener {
-            showNewTaskUI()
+            showNewUI()
         }
     }
 
     private fun populateListView() {
-        todoListItems =
-            RetrieveTasksAsyncTask(database).execute().get() as ArrayList<Task>
+        todoListFolders =
+            RetrieveFoldersAsyncTask(database).execute().get() as ArrayList<Folder>
 
-        listAdapter = TaskListAdapter(this, todoListItems)
+        listAdapter = FolderListAdapter(this, todoListFolders)
         listView?.adapter = listAdapter
     }
 
-    private fun showNewTaskUI() {
-        val fragment = NewTaskDialogFragment.newInstance(R.string.add_new_task_dialog_title, null)
+    private fun showNewUI() {
+        val fragment = NewFolderDialogFragment.newInstance(R.string.add_new_folder_dialog_title, null)
 
-        fragment.show(fm, newTaskFragmentTag)
+        fragment.show(fm, newFolderFragmentTag)
     }
 
-    private fun showUpdateTaskUI(selected: Int) {
+    private fun showUpdateUI(selected: Int): Boolean {
         selectedItem = selected
         switchMenuMode(1)
         invalidateOptionsMenu()
+        return true
     }
 
     private fun switchMenuMode(mode: Int) {
         if (mode == 0) { // normal
-            hideCompletedItem?.isVisible = true
-
             editItem?.isVisible = false
             deleteItem?.isVisible = false
-            markDoneItem?.isVisible = false
         } else if (mode == 1) { // edit mode
-            hideCompletedItem?.isVisible = false
 
             editItem?.isVisible = true
             deleteItem?.isVisible = true
-            markDoneItem?.isVisible = true
         }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
 
         val inflater = menuInflater
-        inflater.inflate(R.menu.task_list_menu, menu)
+        inflater.inflate(R.menu.folder_list_menu, menu)
 
-        hideCompletedItem = menu.findItem(R.id.hide_completed_item)
         editItem = menu.findItem(R.id.edit_item)
         deleteItem = menu.findItem(R.id.delete_item)
-        markDoneItem = menu.findItem(R.id.mark_as_done_item)
 
         if (selectedItem == selectedIndexInvalid) {
             switchMenuMode(0)
@@ -137,18 +148,18 @@ class MainActivity : AppCompatActivity(), NewTaskDialogFragment.NewTaskDialogLis
         return when (item.itemId) {
             R.id.edit_item -> {
                 val fragment =
-                    NewTaskDialogFragment.newInstance(
-                        R.string.update_task_dialog_title,
-                        todoListItems[selectedItem]
+                    NewFolderDialogFragment.newInstance(
+                        R.string.update_folder_dialog_title,
+                        todoListFolders[selectedItem]
                     )
-                fragment.show(fm, updateTaskFragmentTag)
+                fragment.show(fm, updateFolderFragmentTag)
                 return true
             }
             R.id.delete_item -> {
-                val selectedTask = todoListItems[selectedItem]
-                DeleteTaskAsyncTask(database, selectedTask).execute()
+                val selectedTask = todoListFolders[selectedItem]
+                DeleteFolderAsyncTask(database, selectedTask).execute()
 
-                todoListItems.removeAt(selectedItem)
+                todoListFolders.removeAt(selectedItem)
                 listAdapter?.notifyDataSetChanged()
 
                 // reset
@@ -159,34 +170,7 @@ class MainActivity : AppCompatActivity(), NewTaskDialogFragment.NewTaskDialogLis
                 hideMenu()
                 return true
             }
-            R.id.mark_as_done_item -> {
-                // Assume we allow un-done task
-                val selectedTask = todoListItems[selectedItem]
 
-                selectedTask.completed = selectedTask.completed?.not()
-
-                UpdateTaskAsyncTask(database, selectedTask).execute()
-                listAdapter?.notifyDataSetChanged()
-
-                if (selectedTask.completed == true) {
-                    showSnackbarMessage(resources.getString(R.string.text_mark_completed_done), "Action")
-                } else {
-                    showSnackbarMessage(resources.getString(R.string.text_mark_uncompleted_done), "Action")
-                }
-
-                return true
-            }
-            R.id.hide_completed_item -> {
-
-                // toggle hiding
-                hideCompleted = hideCompleted?.not()
-                todoListItems.clear()
-                todoListItems.addAll(
-                    RetrieveTasksAsyncTask(database, hideCompleted).execute().get() as ArrayList<Task>)
-                listAdapter?.notifyDataSetChanged()
-
-                return true
-            }
             else -> super.onOptionsItemSelected(item)
         }
     }
@@ -195,9 +179,10 @@ class MainActivity : AppCompatActivity(), NewTaskDialogFragment.NewTaskDialogLis
         Snackbar.make(fab, text, Snackbar.LENGTH_LONG).setAction(action, null).show()
     }
 
-    private fun hideMenu() {
+    private fun hideMenu(): Boolean {
         switchMenuMode(0)
         invalidateOptionsMenu()
+        return true
     }
 
     private fun clearSelected() {
@@ -205,20 +190,20 @@ class MainActivity : AppCompatActivity(), NewTaskDialogFragment.NewTaskDialogLis
         listView?.setSelector(android.R.color.transparent)
     }
 
-    override fun onDialogPositiveClick(dialog: DialogFragment, task: Task?) {
+    override fun onDialogPositiveClick(dialog: DialogFragment, folder: Folder?) {
 
-        // validate task description
-        if (task?.taskDetails!!.isEmpty()) {
+        // validate folder description
+        if (folder?.name!!.isEmpty()) {
             // show error
             showSnackbarMessage(resources.getString(R.string.text_task_text_required), "Action")
             return
         }
 
-        if (dialog.tag == newTaskFragmentTag) {
+        if (dialog.tag == newFolderFragmentTag) {
 
-            task.taskId = AddTaskAsyncTask(database, task).execute().get()
+            folder.folderId = AddFolderAsyncTask(database, folder).execute().get()
 
-            todoListItems.add(task)
+            todoListFolders.add(folder)
             listAdapter?.notifyDataSetChanged()
 
             clearSelected()
@@ -226,10 +211,10 @@ class MainActivity : AppCompatActivity(), NewTaskDialogFragment.NewTaskDialogLis
             hideMenu()
 
             showSnackbarMessage(resources.getString(R.string.text_created_done), "Action")
-        } else if (dialog.tag == updateTaskFragmentTag) {
-            todoListItems[selectedItem] = task
+        } else if (dialog.tag == updateFolderFragmentTag) {
+            todoListFolders[selectedItem] = folder
 
-            UpdateTaskAsyncTask(database, task).execute()
+            UpdateFolderAsyncTask(database, folder).execute()
 
             listAdapter?.notifyDataSetChanged()
 
@@ -245,41 +230,37 @@ class MainActivity : AppCompatActivity(), NewTaskDialogFragment.NewTaskDialogLis
 //        hideMenu()
     }
 
-    private class RetrieveTasksAsyncTask(private val database: AppDatabase?, private val hideCompleted: Boolean?=false) : AsyncTask<Void, Void, List<Task>>() {
-        override fun doInBackground(vararg params: Void): List<Task>? {
-            if (hideCompleted == true) {
-                return database?.taskDao()?.retrieveUnfinishedTaskList()
-            } else {
-                return database?.taskDao()?.retrieveTaskList()
-            }
+    private class RetrieveFoldersAsyncTask(private val database: AppDatabase?) : AsyncTask<Void, Void, List<Folder>>() {
+        override fun doInBackground(vararg params: Void): List<Folder>? {
+            return database?.folderDao()?.retrieveFolderList()
         }
     }
 
-    private class AddTaskAsyncTask(
+    private class AddFolderAsyncTask(
         private val database: AppDatabase?,
-        private val newTask: Task
+        private val newFolder: Folder
     ) : AsyncTask<Void, Void, Long>() {
         override fun doInBackground(vararg params: Void): Long? {
-            return database?.taskDao()?.addNewTask(newTask)
+            return database?.folderDao()?.addNewFolder(newFolder)
         }
     }
 
-    private class UpdateTaskAsyncTask(
+    private class UpdateFolderAsyncTask(
         private val database: AppDatabase?,
-        private val selectedTask: Task
+        private val selectedFolder: Folder
     ) : AsyncTask<Void, Void, Void>() {
         override fun doInBackground(vararg params: Void): Void? {
-            database?.taskDao()?.updateTask(selectedTask)
+            database?.folderDao()?.updateFolder(selectedFolder)
             return null
         }
     }
 
-    private class DeleteTaskAsyncTask(
+    private class DeleteFolderAsyncTask(
         private val database: AppDatabase?,
-        private val selectedTask: Task
+        private val selectedFolder: Folder
     ) : AsyncTask<Void, Void, Void>() {
         override fun doInBackground(vararg params: Void): Void? {
-            database?.taskDao()?.deleteTask(selectedTask)
+            database?.folderDao()?.deleteFolder(selectedFolder)
             return null
         }
     }

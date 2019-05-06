@@ -1,4 +1,4 @@
-package com.flinders.nguy1025.grouptasklist
+package com.flinders.nguy1025.grouptasklist.Adapters
 
 import android.content.Context
 import android.support.v4.content.res.ResourcesCompat
@@ -7,6 +7,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.BaseAdapter
 import android.widget.TextView
+import com.flinders.nguy1025.grouptasklist.Models.Task
+import com.flinders.nguy1025.grouptasklist.R
 import java.util.*
 
 class TaskListAdapter(val context: Context, private val taskList: ArrayList<Task>) : BaseAdapter() {
@@ -59,9 +61,7 @@ class TaskListAdapter(val context: Context, private val taskList: ArrayList<Task
             )
         }
 
-
-        return view;
-
+        return view
     }
 
     override fun getItem(position: Int): Any {

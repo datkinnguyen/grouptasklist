@@ -1,19 +1,24 @@
-package com.flinders.nguy1025.grouptasklist
+package com.flinders.nguy1025.grouptasklist.Models
 
-import android.arch.persistence.room.ColumnInfo
-import android.arch.persistence.room.Entity
-import android.arch.persistence.room.Ignore
-import android.arch.persistence.room.PrimaryKey
+import android.arch.persistence.room.*
 import android.provider.BaseColumns
 import java.io.Serializable
 import java.util.*
 
-@Entity(tableName = TodoListDBContract.TodoListItem.TABLE_NAME)
+@Entity(tableName = TodoListDBContract.TodoListItem.TABLE_NAME
+    , foreignKeys = arrayOf(
+        ForeignKey(entity = Folder::class,
+        parentColumns = arrayOf(BaseColumns._ID),
+        childColumns = arrayOf(TodoListDBContract.TodoListItem.COLUMN_NAME_FOLDER_ID), onDelete = ForeignKey.CASCADE))
+)
 class Task : Serializable {
 
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = BaseColumns._ID)
     var taskId : Long? = null
+
+    @ColumnInfo(name = TodoListDBContract.TodoListItem.COLUMN_NAME_FOLDER_ID)
+    var folderId: Long? = null
 
     @ColumnInfo(name = TodoListDBContract.TodoListItem.COLUMN_NAME_TASK_DETAIL)
     var taskDetails: String?
@@ -37,12 +42,14 @@ class Task : Serializable {
     var imagePath: String? = null
 
     @Ignore
-    constructor(taskDetails: String?) {
+    constructor(taskDetails: String?, folderId: Long) {
         this.taskDetails = taskDetails
+        this.folderId = folderId
     }
 
-    constructor(taskId: Long?, taskDetails: String?, deadline: Long?, notes: String?, completed: Boolean?) {
+    constructor(taskId: Long?, folderId: Long?, taskDetails: String?, deadline: Long?, notes: String?, completed: Boolean?) {
         this.taskId = taskId
+        this.folderId = folderId
         this.taskDetails = taskDetails
         this.notes = notes
         this.completed = completed

@@ -1,11 +1,15 @@
 <resources>
     <string name="app_name">GroupTaskList</string>
     <string name="action_settings">Settings</string>
-    <string name="add_new_task_dialog_title">Add New Task</string>
     <string name="save">Save</string>
-    <string name="update_task_dialog_title">Edit Task</string>
     <string name="edit">Edit</string>
     <string name="delete">Delete</string>
+
+    <string name="add_new_task_dialog_title">Add New Task</string>
+    <string name="update_task_dialog_title">Edit Task</string>
+
+    <string name="add_new_folder_dialog_title">Add New Folder</string>
+    <string name="update_folder_dialog_title">Edit Folder</string>
 
     <string name="deadline">Deadline</string>
     <string name="task">Task</string>
@@ -14,9 +18,10 @@
     <string name="completed">Completed</string>
     <string name="deadline_passed">(Passed)</string>
 
-    <string name="text_created_done">Task Added successfully!</string>
-    <string name="text_updated_done">Task Updated successfully!</string>
-    <string name="text_deleted_done">Task Deleted successfully!</string>
+    <string name="text_created_done">Added successfully!</string>
+    <string name="text_updated_done">Updated successfully!</string>
+    <string name="text_deleted_done">Deleted successfully!</string>
+
     <string name="text_mark_uncompleted_done">Task has been marked as Not completed!</string>
     <string name="text_mark_completed_done">Task has been marked as completed!</string>
 
@@ -24,6 +29,8 @@
 
     <string name="hint_task_name">Enter task name here</string>
     <string name="hint_task_notes">note here...</string>
+
+    <string name="hint_folder_name">Enter folder name here</string>
 
     <string name="no_location_detected">
         No location detected. Make sure location is enabled on the device.
