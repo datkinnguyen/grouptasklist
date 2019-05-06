@@ -33,6 +33,9 @@ class Task : Serializable {
     @ColumnInfo(name = TodoListDBContract.TodoListItem.COLUMN_NAME_NOTES)
     var notes: String? = null
 
+    @ColumnInfo(name = TodoListDBContract.TodoListItem.COLUMN_NAME_IMAGE)
+    var imagePath: String? = null
+
     @Ignore
     constructor(taskDetails: String?) {
         this.taskDetails = taskDetails
@@ -52,6 +55,17 @@ class Task : Serializable {
     fun updateCoordinate(lat: Double, long: Double) {
         this.latitude = lat
         this.longitude = long
+    }
+
+    fun coordinateDoubleArray() :  DoubleArray? {
+        if (this.latitude != null && this.longitude != null) {
+            var coord = DoubleArray(2)
+            coord[0] = this.latitude!!
+            coord[1] = this.longitude!!
+
+            return coord
+        }
+        return null
     }
 
     fun coordinateString(): String {

@@ -1,34 +1,28 @@
-import android.Manifest
-import android.annotation.SuppressLint
+import android.Manifest.permission.CAMERA
+import android.Manifest.permission.READ_EXTERNAL_STORAGE
 import android.app.Activity
 import android.app.AlertDialog
 import android.app.Dialog
 import android.app.TimePickerDialog
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.BitmapFactory
 import android.location.Location
-import android.location.LocationListener
-import android.location.LocationManager
-import android.net.Uri
 import android.os.Bundle
-import android.provider.Settings
-import android.support.design.widget.Snackbar
-import android.support.v4.BuildConfig
 import android.support.v4.app.ActivityCompat
 import android.support.v4.app.DialogFragment
+import android.support.v4.app.Fragment
+import android.support.v4.content.ContextCompat
 import android.util.Log
-import android.view.View
-import android.widget.Button
-import android.widget.EditText
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
+import com.flinders.nguy1025.grouptasklist.MapsActivity
 import com.flinders.nguy1025.grouptasklist.R
 import com.flinders.nguy1025.grouptasklist.Task
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
-import com.google.android.gms.tasks.OnCompleteListener
-import kotlinx.android.synthetic.main.activity_main.*
+import pl.aprilapps.easyphotopicker.DefaultCallback
+import pl.aprilapps.easyphotopicker.EasyImage
+import java.io.File
 import java.util.*
 
 
@@ -39,11 +33,34 @@ class NewTaskDialogFragment : DialogFragment() {
         fun onDialogNegativeClick(dialog: DialogFragment)
     }
 
+    companion object {
+        val REQUEST_MAPS_GPS= 11
+        const val argTitle = "dialog_title"
+        const val argTask = "task"
+
+        fun newInstance(title: Int, task: Task?): NewTaskDialogFragment {
+            val newTaskDialogFragment = NewTaskDialogFragment()
+            val args = Bundle()
+
+            args.putInt(argTitle, title)
+            newTaskDialogFragment.arguments = args
+
+            args.putSerializable(argTask, task)
+
+            return newTaskDialogFragment
+        }
+
+    }
+
     private val TAG = "NewTaskDialogFragment"
+
     private val REQUEST_PERMISSIONS_REQUEST_CODE = 100
+    private val REQUEST_CAMERA_REQUEST_CODE = 10
+
 
     private var newTaskDialogListener: NewTaskDialogListener? = null
     private var task: Task? = null
+    private var imageFile: File? = null
 
     /**
      * Provides the entry point to the Fused Location Provider API.
@@ -61,24 +78,8 @@ class NewTaskDialogFragment : DialogFragment() {
     var tvGPS: TextView? = null
     var btnDeadline: Button? = null
     var btnGPS: Button? = null
-
-    companion object {
-        const val argTitle = "dialog_title"
-        const val argTask = "task"
-
-        fun newInstance(title: Int, task: Task?): NewTaskDialogFragment {
-            val newTaskDialogFragment = NewTaskDialogFragment()
-            val args = Bundle()
-
-            args.putInt(argTitle, title)
-            newTaskDialogFragment.arguments = args
-
-            args.putSerializable(argTask, task)
-
-            return newTaskDialogFragment
-        }
-
-    }
+    var btnImage: Button? = null
+    var imvImage: ImageView? = null
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
 
@@ -100,6 +101,9 @@ class NewTaskDialogFragment : DialogFragment() {
         btnGPS = dialogView.findViewById(R.id.btn_gps)
         tvGPS = dialogView.findViewById(R.id.tv_gps)
 
+        btnImage = dialogView.findViewById(R.id.btn_image)
+        imvImage = dialogView.findViewById(R.id.imv_image)
+
         if (this.task != null) {
 
             // fill data
@@ -107,18 +111,33 @@ class NewTaskDialogFragment : DialogFragment() {
             tvNotes?.setText(task?.notes)
             updateDeadlineText()
             updateGPSText()
+            updateImage()
         } else {
             this.task = Task("")
+        }
+
+        btnImage?.setOnClickListener { v ->
+            run {
+
+                if (!checkCameraersmission()) {
+                    requestCameraPermission()
+                } else {
+                    openImagePicker()
+                }
+            }
         }
 
         btnGPS?.setOnClickListener { v ->
             run {
 
-                if (!checkPermissions()) {
-                    requestPermissions()
-                } else {
-                    getLastLocation()
+                val intent = Intent(activity, MapsActivity::class.java)
+
+                var coord = this.task?.coordinateDoubleArray()
+                if (coord != null) {
+                    intent.putExtra(MapsActivity.coordinateKey, coord)
                 }
+
+                startActivityForResult(intent, REQUEST_MAPS_GPS)
             }
         }
 
@@ -170,9 +189,84 @@ class NewTaskDialogFragment : DialogFragment() {
         tvDeadline?.setText(this.task?.getDeadlineDate().toString())
     }
 
-    private fun showSnackbarMessage(text: String, action: String) {
-        Toast.makeText(activity, text, Toast.LENGTH_LONG).show()
-//        Snackbar.make(fab, text, Snackbar.LENGTH_LONG).setAction(action, null).show()
+    private fun openImagePicker() {
+        EasyImage.openChooserWithGallery(
+            this as Fragment,
+            resources.getString(R.string.image_select), 0)
+    }
+
+    private fun updateImage() {
+
+        if (task?.imagePath != null) {
+            // create Uri from path
+            imvImage!!.setImageBitmap(BitmapFactory.decodeFile(task?.imagePath))
+        }
+    }
+
+    private fun checkCameraersmission(): Boolean {
+        return (ContextCompat.checkSelfPermission(activity as Activity, android.Manifest.permission.CAMERA) ==
+                PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(activity as Activity,
+            android.Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED)
+    }
+
+    private fun requestCameraPermission() {
+        ActivityCompat.requestPermissions(activity as Activity, arrayOf(READ_EXTERNAL_STORAGE, CAMERA),
+            REQUEST_CAMERA_REQUEST_CODE)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        // Handle coordinate returned from maps screen
+        if (requestCode == REQUEST_MAPS_GPS && resultCode == Activity.RESULT_OK && data != null) {
+
+            // get gps coordinate return
+            val coord = data.getDoubleArrayExtra(MapsActivity.coordinateKey)
+            if (coord != null && coord.size == 2) {
+                // got valid coordinate
+                this.task?.latitude = coord[0]
+                this.task?.longitude = coord[1]
+                updateGPSText()
+            }
+
+        }
+
+        // Handle Image from EasyImage lib
+        EasyImage.handleActivityResult(requestCode, resultCode, data, activity as Activity,
+            object : DefaultCallback() {
+                override fun onImagePickerError(
+                    e: Exception?,
+                    source: EasyImage.ImageSource?, type: Int
+                ) {
+
+                    e!!.printStackTrace()
+                }
+
+                override fun onImagesPicked(
+                    imageFiles: List<File>,
+                    source: EasyImage.ImageSource, type: Int
+                ) {
+
+                    if (imageFiles.isNotEmpty()) {
+                        imageFile = imageFiles[0]
+                        // update to task
+                        task?.imagePath = imageFile?.absolutePath
+
+                        updateImage()
+                    }
+                }
+
+                override fun onCanceled(source: EasyImage.ImageSource?, type: Int) {
+                    //Cancel handling, you might wanna remove taken photo if it was canceled
+                    if (source == EasyImage.ImageSource.CAMERA) {
+                        val photoFile = EasyImage
+                            .lastlyTakenButCanceledPhoto(activity as Activity)
+                        photoFile?.delete()
+                    }
+                }
+
+            })
+
     }
 
     override fun onAttach(activity: Activity?) {
@@ -187,110 +281,22 @@ class NewTaskDialogFragment : DialogFragment() {
     }
 
     /**
-     * Provides a simple way of getting a device's location and is well suited for
-     * applications that do not require a fine-grained location and that do not need location
-     * updates. Gets the best and most recent location currently available, which may be null
-     * in rare cases when a location is not available.
-     *
-     *
-     * Note: this method should be called after location permission has been granted.
-     */
-    @SuppressLint("MissingPermission")
-    private fun getLastLocation() {
-
-        mFusedLocationClient!!.lastLocation.addOnCompleteListener(activity as Activity) { locationTask ->
-            if (locationTask.isSuccessful && locationTask.result != null) {
-                mLastLocation = locationTask.result
-                this.task?.latitude = mLastLocation?.latitude
-                this.task?.longitude = mLastLocation?.longitude
-                updateGPSText()
-            } else {
-                Log.w(TAG, "getLastLocation:exception", locationTask.exception)
-                showSnackbarMessage(getString(R.string.no_location_detected), resources.getString(android.R.string.ok))
-            }
-        }
-    }
-
-    /**
-     * Return the current state of the permissions needed.
-     */
-    private fun checkPermissions(): Boolean {
-        val permissionState = ActivityCompat.checkSelfPermission(
-            activity as Activity,
-            Manifest.permission.ACCESS_COARSE_LOCATION
-        )
-        return permissionState == PackageManager.PERMISSION_GRANTED
-    }
-
-    private fun startLocationPermissionRequest() {
-        ActivityCompat.requestPermissions(
-            activity as Activity,
-            arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION),
-            REQUEST_PERMISSIONS_REQUEST_CODE
-        )
-    }
-
-    private fun requestPermissions() {
-        val shouldProvideRationale = ActivityCompat.shouldShowRequestPermissionRationale(
-            activity as Activity,
-            Manifest.permission.ACCESS_COARSE_LOCATION
-        )
-
-        // Provide an additional rationale to the user. This would happen if the user denied the
-        // request previously, but didn't check the "Don't ask again" checkbox.
-        if (shouldProvideRationale) {
-            Log.i(TAG, "Displaying permission rationale to provide additional context.")
-
-            Snackbar.make(fab, R.string.permission_rationale, Snackbar.LENGTH_LONG)
-                .setAction(android.R.string.ok, View.OnClickListener {
-                    // Request permission
-                    startLocationPermissionRequest()
-                }).show()
-
-        } else {
-            Log.i(TAG, "Requesting permission")
-            // Request permission. It's possible this can be auto answered if device policy
-            // sets the permission in a given state or the user denied the permission
-            // previously and checked "Never ask again".
-            startLocationPermissionRequest()
-        }
-    }
-
-    /**
      * Callback received when a permissions request has been completed.
      */
-    override fun onRequestPermissionsResult(
-        requestCode: Int, permissions: Array<String>,
-        grantResults: IntArray
-    ) {
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         Log.i(TAG, "onRequestPermissionResult")
-        if (requestCode == REQUEST_PERMISSIONS_REQUEST_CODE) {
-            if (grantResults.size <= 0) {
-                // If user interaction was interrupted, the permission request is cancelled and you
-                // receive empty arrays.
-                Log.i(TAG, "User interaction was cancelled.")
-            } else if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Permission granted.
-                getLastLocation()
+        if (requestCode == REQUEST_CAMERA_REQUEST_CODE) {
+
+            if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)
+                && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
+
+                openImagePicker()
             } else {
-                // Permission denied.
-                Snackbar.make(fab, R.string.permission_denied_explanation, Snackbar.LENGTH_LONG)
-                    .setAction(R.string.settings, View.OnClickListener {
-                        // Build intent that displays the App settings screen.
-                        val intent = Intent()
-                        intent.action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
-                        val uri = Uri.fromParts(
-                            "package",
-                            BuildConfig.APPLICATION_ID, null
-                        )
-                        intent.data = uri
-                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                        startActivity(intent)
-                    }).show()
-
-
+                Toast.makeText(activity as Activity,"Permission Denied",Toast.LENGTH_SHORT).show()
             }
+            return
         }
+
     }
 
 

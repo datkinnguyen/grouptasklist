@@ -17,6 +17,7 @@ object TodoListDBContract {
             const val COLUMN_NAME_LATITUDE = "task_lat"
             const val COLUMN_NAME_LONGITUDE = "task_long"
             const val COLUMN_NAME_NOTES = "notes"
+            const val COLUMN_NAME_IMAGE = "image"
         }
     }
 
