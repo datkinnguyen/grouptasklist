@@ -8,7 +8,10 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
 import android.os.Bundle
-import android.widget.*
+import android.widget.Button
+import android.widget.EditText
+import android.widget.ImageView
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -16,6 +19,7 @@ import com.flinders.nguy1025.grouptasklist.Models.AppDatabase
 import com.flinders.nguy1025.grouptasklist.Models.DBTasksHelper
 import com.flinders.nguy1025.grouptasklist.Models.Task
 import com.flinders.nguy1025.grouptasklist.R
+import com.flinders.nguy1025.grouptasklist.Utilities
 import pl.aprilapps.easyphotopicker.DefaultCallback
 import pl.aprilapps.easyphotopicker.EasyImage
 import java.io.File
@@ -168,7 +172,7 @@ class NewTaskActivity : AppCompatActivity() {
         // validate task description
         if (tvTask?.text.toString().isEmpty()) {
             // show error
-            Toast.makeText(this, R.string.text_task_text_required, Toast.LENGTH_LONG).show()
+            Utilities.showToast(this, R.string.text_task_text_required)
             return
         }
 
@@ -267,10 +271,7 @@ class NewTaskActivity : AppCompatActivity() {
                     source: EasyImage.ImageSource?, type: Int
                 ) {
 
-                    Toast.makeText(
-                        this@NewTaskActivity,
-                        "Error: " + e!!.localizedMessage, Toast.LENGTH_SHORT
-                    ).show()
+                    Utilities.showToast(this@NewTaskActivity, e!!.localizedMessage)
                 }
 
                 override fun onImagesPicked(
@@ -308,7 +309,7 @@ class NewTaskActivity : AppCompatActivity() {
                 openImagePicker()
 
             } else {
-                Toast.makeText(this, R.string.permission_denied_explanation, Toast.LENGTH_SHORT).show()
+                Utilities.showToast(this, R.string.permission_denied_explanation)
             }
             return
         }

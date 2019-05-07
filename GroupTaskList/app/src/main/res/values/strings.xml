@@ -42,4 +42,6 @@
 
     <string name="authority">com.flinders.nguy1025.grouptasklist.fileProvider</string>
     <string name="image_select">Select an image</string>
+    <string name="text_hide_completed_task">Completed tasks are hidden</string>
+    <string name="text_show_all_task">Showing all tasks</string>
 </resources>

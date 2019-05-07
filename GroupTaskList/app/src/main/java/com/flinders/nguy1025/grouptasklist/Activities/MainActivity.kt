@@ -18,7 +18,7 @@ import com.flinders.nguy1025.grouptasklist.Models.DBTasksHelper
 import com.flinders.nguy1025.grouptasklist.Models.Folder
 import com.flinders.nguy1025.grouptasklist.Models.TodoListDBContract
 import com.flinders.nguy1025.grouptasklist.R
-import com.google.android.material.snackbar.Snackbar
+import com.flinders.nguy1025.grouptasklist.Utilities
 import kotlinx.android.synthetic.main.activity_main.*
 import java.util.*
 
@@ -106,7 +106,7 @@ class MainActivity : AppCompatActivity(), NewFolderDialogFragment.NewFolderDialo
                 // reset
                 clearSelected()
 
-                showSnackbarMessage(resources.getString(R.string.text_deleted_done), "Action")
+                Utilities.showToast(this@MainActivity, R.string.text_deleted_done)
             }
         }
         listAdapter = FolderListAdapter(this, todoListFolders, listener)
@@ -124,10 +124,6 @@ class MainActivity : AppCompatActivity(), NewFolderDialogFragment.NewFolderDialo
         return true
     }
 
-    private fun showSnackbarMessage(text: String, action: String) {
-        Snackbar.make(fab, text, Snackbar.LENGTH_LONG).setAction(action, null).show()
-    }
-
     private fun clearSelected() {
         listView?.setSelector(android.R.color.transparent)
     }
@@ -137,7 +133,7 @@ class MainActivity : AppCompatActivity(), NewFolderDialogFragment.NewFolderDialo
         // validate folder description
         if (folder?.name!!.isEmpty()) {
             // show error
-            showSnackbarMessage(resources.getString(R.string.text_task_text_required), "Action")
+            Utilities.showToast(this, R.string.text_task_text_required)
             return
         }
 
@@ -150,15 +146,14 @@ class MainActivity : AppCompatActivity(), NewFolderDialogFragment.NewFolderDialo
 
             clearSelected()
 
-            showSnackbarMessage(resources.getString(R.string.text_created_done), "Action")
+            Utilities.showToast(this, R.string.text_created_done)
         } else if (dialog.tag == updateFolderFragmentTag) {
-//            todoListFolders[selectedItem] = folder
 
             DBTasksHelper.UpdateFolderAsyncTask(database, folder).execute()
 
             listAdapter?.notifyDataSetChanged()
 
-            showSnackbarMessage(resources.getString(R.string.text_updated_done), "Action")
+            Utilities.showToast(this, R.string.text_updated_done)
 
             clearSelected()
         }

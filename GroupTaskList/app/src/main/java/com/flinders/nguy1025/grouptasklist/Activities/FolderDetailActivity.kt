@@ -14,7 +14,7 @@ import com.flinders.nguy1025.grouptasklist.Models.DBTasksHelper
 import com.flinders.nguy1025.grouptasklist.Models.Folder
 import com.flinders.nguy1025.grouptasklist.Models.Task
 import com.flinders.nguy1025.grouptasklist.R
-import com.google.android.material.snackbar.Snackbar
+import com.flinders.nguy1025.grouptasklist.Utilities
 import kotlinx.android.synthetic.main.activity_folder_detail.*
 
 
@@ -113,7 +113,7 @@ class FolderDetailActivity : AppCompatActivity() {
                 // reset
                 clearSelected()
 
-                showSnackbarMessage(resources.getString(R.string.text_deleted_done), "Action")
+                Utilities.showToast(this@FolderDetailActivity, R.string.text_deleted_done)
             }
 
             override fun onClickComplete(task: Task) {
@@ -130,9 +130,9 @@ class FolderDetailActivity : AppCompatActivity() {
                 }
 
                 if (task.completed == true) {
-                    showSnackbarMessage(resources.getString(R.string.text_mark_completed_done), "Action")
+                    Utilities.showToast(this@FolderDetailActivity, R.string.text_mark_completed_done)
                 } else {
-                    showSnackbarMessage(resources.getString(R.string.text_mark_uncompleted_done), "Action")
+                    Utilities.showToast(this@FolderDetailActivity, R.string.text_mark_uncompleted_done)
                 }
             }
         }
@@ -148,8 +148,10 @@ class FolderDetailActivity : AppCompatActivity() {
     private fun updateHideCompletedItem() {
         if (hideCompleted == true) {
             hideCompletedItem?.setIcon(R.drawable.ic_show_all)
+            Utilities.showToast(this, R.string.text_hide_completed_task)
         } else {
             hideCompletedItem?.setIcon(R.drawable.ic_hide_completed)
+            Utilities.showToast(this, R.string.text_show_all_task)
         }
     }
 
@@ -192,10 +194,6 @@ class FolderDetailActivity : AppCompatActivity() {
             ).execute().get() as ArrayList<Task>
         )
         listAdapter?.notifyDataSetChanged()
-    }
-
-    private fun showSnackbarMessage(text: String, action: String) {
-        Snackbar.make(fab_folder_detail, text, Snackbar.LENGTH_LONG).setAction(action, null).show()
     }
 
     private fun clearSelected() {

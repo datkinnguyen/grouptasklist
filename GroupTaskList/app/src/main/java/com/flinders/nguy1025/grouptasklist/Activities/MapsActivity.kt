@@ -5,10 +5,10 @@ import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.flinders.nguy1025.grouptasklist.R
+import com.flinders.nguy1025.grouptasklist.Utilities
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -173,7 +173,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                 setUpMap()
             } else {
                 // Permission denied.
-                Toast.makeText(this, getString(R.string.permission_denied_explanation), Toast.LENGTH_LONG).show()
+                Utilities.showToast(this, R.string.permission_denied_explanation)
             }
 
         }
