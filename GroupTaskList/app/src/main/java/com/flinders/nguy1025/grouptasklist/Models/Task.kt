@@ -11,7 +11,7 @@ import java.util.*
         parentColumns = arrayOf(BaseColumns._ID),
             childColumns = arrayOf(TodoListDBContract.TodoListItem.COLUMN_NAME_FOLDER_ID), onDelete = ForeignKey.CASCADE
         )
-    )
+    ), indices = arrayOf(Index(value = [TodoListDBContract.TodoListItem.COLUMN_NAME_FOLDER_ID]))
 )
 class Task : Serializable {
 

@@ -23,6 +23,7 @@
 
         <activity android:name=".Activities.MapsActivity"></activity>
         <activity android:name=".Activities.FolderDetailActivity"></activity>
+        <activity android:name=".Activities.NewTaskActivity"/>
 
         <provider
                 android:name=".EasyFileProvider"

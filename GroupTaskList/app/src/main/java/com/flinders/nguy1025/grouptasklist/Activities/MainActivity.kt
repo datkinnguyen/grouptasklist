@@ -2,9 +2,9 @@ package com.flinders.nguy1025.grouptasklist.Activities
 
 import NewFolderDialogFragment
 import android.content.Intent
-import android.os.AsyncTask
 import android.os.Bundle
 import android.view.Menu
+import android.widget.AdapterView
 import android.widget.ListView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.DialogFragment
@@ -14,6 +14,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.flinders.nguy1025.grouptasklist.Adapters.FolderAdapterListener
 import com.flinders.nguy1025.grouptasklist.Adapters.FolderListAdapter
 import com.flinders.nguy1025.grouptasklist.Models.AppDatabase
+import com.flinders.nguy1025.grouptasklist.Models.DBTasksHelper
 import com.flinders.nguy1025.grouptasklist.Models.Folder
 import com.flinders.nguy1025.grouptasklist.Models.TodoListDBContract
 import com.flinders.nguy1025.grouptasklist.R
@@ -44,7 +45,7 @@ class MainActivity : AppCompatActivity(), NewFolderDialogFragment.NewFolderDialo
             .addMigrations(object :
                 Migration(TodoListDBContract.DATABASE_VERSION - 1, TodoListDBContract.DATABASE_VERSION) {
                 override fun migrate(database: SupportSQLiteDatabase) {
-                    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+                    // Do nothing
                 }
             })
             .fallbackToDestructiveMigration()
@@ -52,6 +53,17 @@ class MainActivity : AppCompatActivity(), NewFolderDialogFragment.NewFolderDialo
 
         // find views
         listView = findViewById(R.id.list_view)
+
+        listView?.onItemClickListener = AdapterView.OnItemClickListener { parent, view, position, id ->
+            // open folder detail screen
+            val intent = Intent(this@MainActivity, FolderDetailActivity::class.java)
+            val folderId = todoListFolders[position].folderId!!
+
+            intent.putExtra(FolderDetailActivity.folderIdExtraKey, folderId)
+            startActivity(intent)
+
+            clearSelected()
+        }
 
         populateListView()
 
@@ -62,7 +74,7 @@ class MainActivity : AppCompatActivity(), NewFolderDialogFragment.NewFolderDialo
 
     private fun populateListView() {
         todoListFolders =
-            RetrieveFoldersAsyncTask(database).execute().get() as ArrayList<Folder>
+            DBTasksHelper.RetrieveFoldersAsyncTask(database).execute().get() as ArrayList<Folder>
 
         val listener = object : FolderAdapterListener {
 
@@ -86,7 +98,7 @@ class MainActivity : AppCompatActivity(), NewFolderDialogFragment.NewFolderDialo
             }
 
             override fun onClickDelete(folder: Folder) {
-                DeleteFolderAsyncTask(database, folder).execute()
+                DBTasksHelper.DeleteFolderAsyncTask(database, folder).execute()
 
                 todoListFolders.remove(folder)
                 listAdapter?.notifyDataSetChanged()
@@ -131,7 +143,7 @@ class MainActivity : AppCompatActivity(), NewFolderDialogFragment.NewFolderDialo
 
         if (dialog.tag == newFolderFragmentTag) {
 
-            folder.folderId = AddFolderAsyncTask(database, folder).execute().get()
+            folder.folderId = DBTasksHelper.AddFolderAsyncTask(database, folder).execute().get()
 
             todoListFolders.add(folder)
             listAdapter?.notifyDataSetChanged()
@@ -142,7 +154,7 @@ class MainActivity : AppCompatActivity(), NewFolderDialogFragment.NewFolderDialo
         } else if (dialog.tag == updateFolderFragmentTag) {
 //            todoListFolders[selectedItem] = folder
 
-            UpdateFolderAsyncTask(database, folder).execute()
+            DBTasksHelper.UpdateFolderAsyncTask(database, folder).execute()
 
             listAdapter?.notifyDataSetChanged()
 
@@ -157,38 +169,5 @@ class MainActivity : AppCompatActivity(), NewFolderDialogFragment.NewFolderDialo
 //        hideMenu()
     }
 
-    private class RetrieveFoldersAsyncTask(private val database: AppDatabase?) : AsyncTask<Void, Void, List<Folder>>() {
-        override fun doInBackground(vararg params: Void): List<Folder>? {
-            return database?.folderDao()?.retrieveFolderList()
-        }
-    }
 
-    private class AddFolderAsyncTask(
-        private val database: AppDatabase?,
-        private val newFolder: Folder
-    ) : AsyncTask<Void, Void, Long>() {
-        override fun doInBackground(vararg params: Void): Long? {
-            return database?.folderDao()?.addNewFolder(newFolder)
-        }
-    }
-
-    private class UpdateFolderAsyncTask(
-        private val database: AppDatabase?,
-        private val selectedFolder: Folder
-    ) : AsyncTask<Void, Void, Void>() {
-        override fun doInBackground(vararg params: Void): Void? {
-            database?.folderDao()?.updateFolder(selectedFolder)
-            return null
-        }
-    }
-
-    private class DeleteFolderAsyncTask(
-        private val database: AppDatabase?,
-        private val selectedFolder: Folder
-    ) : AsyncTask<Void, Void, Void>() {
-        override fun doInBackground(vararg params: Void): Void? {
-            database?.folderDao()?.deleteFolder(selectedFolder)
-            return null
-        }
-    }
 }

@@ -1,9 +1,11 @@
 package com.flinders.nguy1025.grouptasklist.Activities
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.flinders.nguy1025.grouptasklist.R
@@ -18,17 +20,20 @@ import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import kotlinx.android.synthetic.main.maps_activity.*
 
-class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerDragListener, GoogleMap.OnMapClickListener {
+class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerDragListener,
+    GoogleMap.OnMapClickListener {
 
     companion object {
-        val coordinateKey = "coordinate"
+        const val coordinateKey = "coordinate"
         private const val LOCATION_PERMISSION_REQUEST_CODE = 1
     }
 
     private lateinit var mMap: GoogleMap
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var lastMarker: Marker? = null
-    set(value) {field = value; updateCoordinateText()}
+        set(value) {
+            field = value; updateCoordinateText()
+        }
 
     private var lastLocation: LatLng? = null
 
@@ -72,7 +77,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
 
-        setUpMap()
+        if (checkPermission()) {
+            setUpMap()
+        }
     }
 
     override fun onMarkerDrag(p0: Marker?) {
@@ -95,15 +102,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         }
     }
 
+    @SuppressLint("MissingPermission")
     private fun setUpMap() {
-        if (ActivityCompat.checkSelfPermission(this,
-                android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,
-                arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION),
-                LOCATION_PERMISSION_REQUEST_CODE
-            )
-            return
-        }
 
         mMap.isMyLocationEnabled = true
         mMap.setOnMapClickListener(this)
@@ -116,6 +116,23 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
             val currentLatLng = LatLng(location.latitude, location.longitude)
             addMarkerToMap(currentLatLng)
         }
+    }
+
+    private fun checkPermission(): Boolean {
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                android.Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION),
+                LOCATION_PERMISSION_REQUEST_CODE
+            )
+            return false
+        }
+
+        return true
     }
 
     private fun markerFromLatLng(latLng: LatLng): MarkerOptions {
@@ -139,6 +156,28 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         if (lastLocation != null) {
             tv_coordinates.text = lastLocation.toString()
         }
+    }
+
+    /**
+     * Callback received when a permissions request has been completed.
+     */
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+
+            if (grantResults.isEmpty()) {
+                // If user interaction was interrupted, the permission request is cancelled and you
+                // receive empty arrays.
+
+            } else if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission granted.
+                setUpMap()
+            } else {
+                // Permission denied.
+                Toast.makeText(this, getString(R.string.permission_denied_explanation), Toast.LENGTH_LONG).show()
+            }
+
+        }
+
     }
 
 }

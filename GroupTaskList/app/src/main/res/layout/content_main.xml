@@ -12,7 +12,6 @@
             android:id="@+id/list_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:choiceMode="singleChoice"
-            android:listSelector="@android:color/holo_blue_bright"/>
+            android:choiceMode="singleChoice"/>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

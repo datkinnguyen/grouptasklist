@@ -11,8 +11,7 @@
             android:id="@+id/list_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:choiceMode="singleChoice"
-            android:listSelector="@android:color/holo_blue_bright"/>
+            android:choiceMode="singleChoice"/>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/fab_folder_detail"
@@ -20,6 +19,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|end"
             android:layout_margin="@dimen/fab_margin"
-            app:srcCompat="@android:drawable/ic_input_add" app:backgroundTint="@color/colorPrimary"/>
+            app:srcCompat="@android:drawable/ic_input_add"
+            app:backgroundTint="@color/colorPrimary"/>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

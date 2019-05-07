@@ -34,7 +34,6 @@ class TaskListAdapter(
             viewHolder.notesTextView = view.findViewById(R.id.tv_notes)
             viewHolder.deadlineTextView = view.findViewById(R.id.tv_deadline)
             viewHolder.statusTextView = view.findViewById(R.id.task_item_status)
-            viewHolder.bgView = view.findViewById(R.id.bg_view)
             viewHolder.btnOptions = view.findViewById(R.id.btn_option)
             view.tag = viewHolder
 
@@ -48,7 +47,6 @@ class TaskListAdapter(
         viewHolder?.notesTextView?.text = task.notes
 
         viewHolder?.btnOptions?.setOnClickListener { view -> showOptionsMenu(view, task) }
-        viewHolder?.bgView?.setOnClickListener { view -> taskAdapterListener.onClick(task) }
 
         if (task.getDeadlineDate() != null) {
             var passDeadline = ""
@@ -133,7 +131,6 @@ class TaskListAdapter(
     }
 
     private class ViewHolder {
-        var bgView: View? = null
         var btnOptions: ImageView? = null
         var taskDescriptionTextView: TextView? = null
         var deadlineTextView: TextView? = null

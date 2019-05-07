@@ -32,7 +32,6 @@ class FolderListAdapter(
                 view.findViewById(R.id.tv_folder_name)
             viewHolder.tvFolderTaskCount = view.findViewById(R.id.tv_folder_task_count)
             viewHolder.btnOptions = view.findViewById(R.id.btn_option)
-            viewHolder.bgView = view.findViewById(R.id.bg_view)
             view.tag = viewHolder
 
         } else {
@@ -45,8 +44,6 @@ class FolderListAdapter(
         // hide task count for now
         viewHolder?.tvFolderTaskCount?.text = ""
         viewHolder?.btnOptions?.setOnClickListener { view -> showOptionsMenu(view, folder) }
-
-        viewHolder?.bgView?.setOnClickListener { view -> folderAdapterListener.onClick(folder) }
 
         return view
 
@@ -90,7 +87,6 @@ class FolderListAdapter(
     }
 
     private class ViewHolder {
-        var bgView: View? = null
         var tvFolderName: TextView? = null
         var tvFolderTaskCount: TextView? = null
         var btnOptions: ImageView? = null

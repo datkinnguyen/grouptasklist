@@ -1,20 +1,19 @@
+package com.flinders.nguy1025.grouptasklist.Activities
+
 import android.Manifest.permission.CAMERA
 import android.Manifest.permission.READ_EXTERNAL_STORAGE
 import android.app.Activity
-import android.app.AlertDialog
-import android.app.Dialog
 import android.app.TimePickerDialog
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
 import android.os.Bundle
-import android.util.Log
 import android.widget.*
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.DialogFragment
-import com.flinders.nguy1025.grouptasklist.Activities.MapsActivity
+import com.flinders.nguy1025.grouptasklist.Models.AppDatabase
+import com.flinders.nguy1025.grouptasklist.Models.DBTasksHelper
 import com.flinders.nguy1025.grouptasklist.Models.Task
 import com.flinders.nguy1025.grouptasklist.R
 import pl.aprilapps.easyphotopicker.DefaultCallback
@@ -23,40 +22,27 @@ import java.io.File
 import java.util.*
 
 
-class NewTaskDialogFragment : DialogFragment() {
-
-    interface NewTaskDialogListener {
-        fun onDialogPositiveClick(dialog: DialogFragment, task: Task?)
-        fun onDialogNegativeClick(dialog: DialogFragment)
-    }
+class NewTaskActivity : AppCompatActivity() {
 
     companion object {
-        val REQUEST_MAPS_GPS= 11
-        const val argTitle = "dialog_title"
+        const val MODE_NEW = 0
+        const val MODE_EDIT = 1
+        val REQUEST_MAPS_GPS = 11
+
         const val argTask = "task"
-
-        fun newInstance(title: Int, task: Task?): NewTaskDialogFragment {
-            val newTaskDialogFragment = NewTaskDialogFragment()
-            val args = Bundle()
-
-            args.putInt(argTitle, title)
-            newTaskDialogFragment.arguments = args
-
-            args.putSerializable(argTask, task)
-
-            return newTaskDialogFragment
-        }
+        const val argFolderId = "folderId"
 
     }
-
-    private val TAG = "NewTaskDialogFragment"
 
     private val REQUEST_PERMISSIONS_REQUEST_CODE = 100
     private val REQUEST_CAMERA_REQUEST_CODE = 10
 
-    private var newTaskDialogListener: NewTaskDialogListener? = null
     private var task: Task? = null
     private var imageFile: File? = null
+    private var mode: Int = MODE_NEW
+    private var folderId: Long? = null
+
+    private var database: AppDatabase? = MainActivity.database
 
     var tvTask: EditText? = null
     var tvNotes: EditText? = null
@@ -67,43 +53,40 @@ class NewTaskDialogFragment : DialogFragment() {
     var btnImage: Button? = null
     var imvImage: ImageView? = null
 
-    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_new_task)
 
-        val title = arguments!!.getInt(argTitle)
-        this.task = arguments!!.getSerializable(argTask) as Task?
+        tvTask = findViewById(R.id.tv_task)
+        tvNotes = findViewById(R.id.tv_notes)
 
-        val builder = AlertDialog.Builder(this.activity!!).setTitle(title)
+        btnDeadline = findViewById(R.id.btn_deadline)
+        tvDeadline = findViewById(R.id.tv_deadline)
 
-        val dialogView = activity!!.layoutInflater.inflate(R.layout.dialog_new_task, null)
+        btnGPS = findViewById(R.id.btn_gps)
+        tvGPS = findViewById(R.id.tv_gps)
 
-        tvTask = dialogView.findViewById(R.id.tv_task)
-        tvNotes = dialogView.findViewById(R.id.tv_notes)
+        btnImage = findViewById(R.id.btn_image)
+        imvImage = findViewById(R.id.imv_image)
 
-        btnDeadline = dialogView.findViewById(R.id.btn_deadline)
-        tvDeadline = dialogView.findViewById(R.id.tv_deadline)
+        val btnCancel = findViewById<Button>(R.id.btn_cancel)
+        val btnSave = findViewById<Button>(R.id.btn_save)
+        btnCancel?.setOnClickListener { v ->
+            run {
+                onClickCancel()
+            }
+        }
 
-        btnGPS = dialogView.findViewById(R.id.btn_gps)
-        tvGPS = dialogView.findViewById(R.id.tv_gps)
-
-        btnImage = dialogView.findViewById(R.id.btn_image)
-        imvImage = dialogView.findViewById(R.id.imv_image)
-
-        if (this.task != null) {
-
-            // fill data
-            tvTask?.setText(task?.taskDetails)
-            tvNotes?.setText(task?.notes)
-            updateDeadlineText()
-            updateGPSText()
-            updateImage()
-        } else {
-            this.task = Task("", 0)
+        btnSave?.setOnClickListener { v ->
+            run {
+                onClickSave()
+            }
         }
 
         btnImage?.setOnClickListener { v ->
             run {
 
-                if (!checkCameraersmission()) {
+                if (!checkCameraPermission()) {
                     requestCameraPermission()
                 } else {
                     openImagePicker()
@@ -114,14 +97,17 @@ class NewTaskDialogFragment : DialogFragment() {
         btnGPS?.setOnClickListener { v ->
             run {
 
-                val intent = Intent(activity, MapsActivity::class.java)
+                val intent = Intent(this, MapsActivity::class.java)
 
                 var coord = this.task?.coordinateDoubleArray()
                 if (coord != null) {
                     intent.putExtra(MapsActivity.coordinateKey, coord)
                 }
 
-                startActivityForResult(intent, REQUEST_MAPS_GPS)
+                startActivityForResult(
+                    intent,
+                    REQUEST_MAPS_GPS
+                )
             }
         }
 
@@ -133,7 +119,7 @@ class NewTaskDialogFragment : DialogFragment() {
                 c.time = date
 
                 val timePicker =
-                    TimePickerDialog(activity, TimePickerDialog.OnTimeSetListener { view, hourOfDay, minute ->
+                    TimePickerDialog(this, TimePickerDialog.OnTimeSetListener { view, hourOfDay, minute ->
 
                         var currentDate = Date()
                         c.time = currentDate
@@ -149,20 +135,64 @@ class NewTaskDialogFragment : DialogFragment() {
             }
         }
 
-        builder.setView(dialogView).setPositiveButton(R.string.save) { _, _ ->
-            // save input data
+    }
 
-            this.task?.taskDetails = tvTask?.text.toString()
-            this.task?.notes = tvNotes?.text.toString()
+    override fun onResume() {
+        super.onResume()
 
-            newTaskDialogListener?.onDialogPositiveClick(this, this.task)
+        // load data
+        this.folderId = intent?.getLongExtra(argFolderId, 0)
+        this.task = intent?.getSerializableExtra(argTask) as Task?
+
+        if (this.task != null) {
+            mode = MODE_EDIT
+            // fill data
+            tvTask?.setText(task?.taskDetails)
+            tvNotes?.setText(task?.notes)
+            updateDeadlineText()
+            updateGPSText()
+            updateImage()
+        } else {
+            mode = MODE_NEW
+            this.task = Task("", 0)
         }
 
-        builder.setView(dialogView).setNegativeButton(android.R.string.cancel) { _, _ ->
-            newTaskDialogListener?.onDialogNegativeClick(this)
+        if (mode == MODE_NEW) {
+            supportActionBar?.title = resources.getString(R.string.add_new_task_dialog_title)
+        } else {
+            supportActionBar?.title = resources.getString(R.string.update_task_dialog_title)
+        }
+    }
+
+    private fun onClickSave() {
+        // validate task description
+        if (tvTask?.text.toString().isEmpty()) {
+            // show error
+            Toast.makeText(this, R.string.text_task_text_required, Toast.LENGTH_LONG).show()
+            return
         }
 
-        return builder.create()
+        // save input data
+        this.task?.taskDetails = tvTask?.text.toString()
+        this.task?.notes = tvNotes?.text.toString()
+
+        if (mode == NewTaskActivity.MODE_NEW) {
+
+            task?.folderId = this.folderId
+            task?.taskId = DBTasksHelper.AddTaskAsyncTask(database, task!!).execute().get()
+
+        } else if (mode == NewTaskActivity.MODE_EDIT) {
+            DBTasksHelper.UpdateTaskAsyncTask(database, task!!).execute()
+        }
+
+        // done
+        setResult(Activity.RESULT_OK)
+        finish()
+    }
+
+    private fun onClickCancel() {
+        //just dismiss
+        finish()
     }
 
     private fun updateGPSText() {
@@ -175,8 +205,9 @@ class NewTaskDialogFragment : DialogFragment() {
 
     private fun openImagePicker() {
         EasyImage.openChooserWithGallery(
-            activity as Activity,
-            resources.getString(R.string.image_select), 0)
+            this,
+            resources.getString(R.string.image_select), 0
+        )
     }
 
     private fun updateImage() {
@@ -187,15 +218,28 @@ class NewTaskDialogFragment : DialogFragment() {
         }
     }
 
-    private fun checkCameraersmission(): Boolean {
-        return (ContextCompat.checkSelfPermission(activity as Activity, android.Manifest.permission.CAMERA) ==
-                PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(activity as Activity,
-            android.Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED)
+    private fun checkCameraPermission(): Boolean {
+        return (ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA) ==
+                PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(
+            this,
+            android.Manifest.permission.READ_EXTERNAL_STORAGE
+        ) == PackageManager.PERMISSION_GRANTED)
     }
 
     private fun requestCameraPermission() {
-        ActivityCompat.requestPermissions(activity as Activity, arrayOf(READ_EXTERNAL_STORAGE, CAMERA),
-            REQUEST_CAMERA_REQUEST_CODE)
+        ActivityCompat.requestPermissions(
+            this, arrayOf(READ_EXTERNAL_STORAGE, CAMERA),
+            REQUEST_CAMERA_REQUEST_CODE
+        )
+    }
+
+    fun updateSelectedImage(imgUri: File?) {
+        // update to task
+        imageFile = imgUri
+        task?.imagePath = imageFile?.absolutePath
+
+        updateImage()
+
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -212,76 +256,63 @@ class NewTaskDialogFragment : DialogFragment() {
                 this.task?.longitude = coord[1]
                 updateGPSText()
             }
-
         }
 
         // Handle Image from EasyImage lib
-        EasyImage.handleActivityResult(requestCode, resultCode, data, activity as Activity,
+        EasyImage.handleActivityResult(
+            requestCode, resultCode, data, this,
             object : DefaultCallback() {
                 override fun onImagePickerError(
                     e: Exception?,
                     source: EasyImage.ImageSource?, type: Int
                 ) {
 
-                    e!!.printStackTrace()
+                    Toast.makeText(
+                        this@NewTaskActivity,
+                        "Error: " + e!!.localizedMessage, Toast.LENGTH_SHORT
+                    ).show()
                 }
 
                 override fun onImagesPicked(
                     imageFiles: List<File>,
                     source: EasyImage.ImageSource, type: Int
                 ) {
-
                     if (imageFiles.isNotEmpty()) {
-                        imageFile = imageFiles[0]
-                        // update to task
-                        task?.imagePath = imageFile?.absolutePath
-
-                        updateImage()
+                        updateSelectedImage(imageFiles[0])
                     }
                 }
 
                 override fun onCanceled(source: EasyImage.ImageSource?, type: Int) {
                     //Cancel handling, you might wanna remove taken photo if it was canceled
                     if (source == EasyImage.ImageSource.CAMERA) {
+                        // delete taken but canceled photo
                         val photoFile = EasyImage
-                            .lastlyTakenButCanceledPhoto(activity as Activity)
+                            .lastlyTakenButCanceledPhoto(this@NewTaskActivity)
                         photoFile?.delete()
                     }
                 }
 
             })
-
-    }
-
-    override fun onAttach(context: Context) {
-        super.onAttach(context)
-
-        try {
-            newTaskDialogListener = activity as NewTaskDialogListener
-        } catch (e: ClassCastException) {
-            throw ClassCastException(activity.toString() + " must implement NewFolderDialogListener")
-        }
-
     }
 
     /**
      * Callback received when a permissions request has been completed.
      */
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
-        Log.i(TAG, "onRequestPermissionResult")
         if (requestCode == REQUEST_CAMERA_REQUEST_CODE) {
 
             if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)
-                && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
+                && grantResults[1] == PackageManager.PERMISSION_GRANTED
+            ) {
 
                 openImagePicker()
+
             } else {
-                Toast.makeText(activity as Activity,"Permission Denied",Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, R.string.permission_denied_explanation, Toast.LENGTH_SHORT).show()
             }
             return
         }
 
     }
-
 
 }
