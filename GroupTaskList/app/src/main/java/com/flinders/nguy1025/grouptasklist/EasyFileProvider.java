@@ -1,8 +1,9 @@
 package com.flinders.nguy1025.grouptasklist;
 
 import android.net.Uri;
+import androidx.core.content.FileProvider;
 
-public class EasyFileProvider extends android.support.v4.content.FileProvider {
+public class EasyFileProvider extends FileProvider {
 
     public EasyFileProvider(){
 

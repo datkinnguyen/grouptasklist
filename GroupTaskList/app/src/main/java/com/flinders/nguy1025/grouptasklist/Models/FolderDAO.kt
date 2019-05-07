@@ -1,8 +1,7 @@
 package com.flinders.nguy1025.grouptasklist.Models
 
-import android.arch.persistence.room.*
 import android.provider.BaseColumns
-
+import androidx.room.*
 
 @Dao
 interface FolderDAO {

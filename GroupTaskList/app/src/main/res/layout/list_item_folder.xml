@@ -2,6 +2,7 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:id="@+id/bg_view"
                 android:padding="@dimen/fab_margin">
 
     <TextView android:id="@+id/tv_folder_name"
@@ -16,8 +17,18 @@
               android:layout_height="wrap_content"
               android:text="20"
               android:textSize="16sp"
-              android:layout_alignParentRight="true"
-              android:layout_alignParentEnd="true"
+              android:layout_below="@id/tv_folder_name"
+              android:layout_alignParentStart="true"
               android:textColor="@android:color/holo_green_light"/>
+
+    <ImageView android:id="@+id/btn_option"
+               android:layout_width="60dp"
+               android:layout_height="70dp"
+               android:paddingLeft="30dp"
+               android:layout_alignParentRight="true"
+               android:layout_alignParentEnd="true"
+               android:layout_centerVertical="true"
+               android:scaleType="centerInside"
+               android:src="@drawable/ic_threedots"/>
 
 </RelativeLayout>

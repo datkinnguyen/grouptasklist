@@ -1,30 +1,28 @@
 package com.flinders.nguy1025.grouptasklist.Activities
 
 import NewFolderDialogFragment
-import android.arch.persistence.db.SupportSQLiteDatabase
-import android.arch.persistence.room.Room
-import android.arch.persistence.room.migration.Migration
 import android.content.Intent
 import android.os.AsyncTask
 import android.os.Bundle
-import android.support.design.widget.Snackbar
-import android.support.v4.app.DialogFragment
-import android.support.v7.app.AppCompatActivity
 import android.view.Menu
-import android.view.MenuItem
-import android.widget.AdapterView
 import android.widget.ListView
+import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.DialogFragment
+import androidx.room.Room
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
+import com.flinders.nguy1025.grouptasklist.Adapters.FolderAdapterListener
 import com.flinders.nguy1025.grouptasklist.Adapters.FolderListAdapter
 import com.flinders.nguy1025.grouptasklist.Models.AppDatabase
 import com.flinders.nguy1025.grouptasklist.Models.Folder
 import com.flinders.nguy1025.grouptasklist.Models.TodoListDBContract
 import com.flinders.nguy1025.grouptasklist.R
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.activity_main.*
 import java.util.*
 
 class MainActivity : AppCompatActivity(), NewFolderDialogFragment.NewFolderDialogListener {
 
-    private val selectedIndexInvalid = -1
     private val newFolderFragmentTag = "new_folder"
     private val updateFolderFragmentTag = "update_folder"
     private val fm = supportFragmentManager
@@ -33,10 +31,6 @@ class MainActivity : AppCompatActivity(), NewFolderDialogFragment.NewFolderDialo
     private var listAdapter: FolderListAdapter? = null
 
     private var listView: ListView? = null
-    var editItem: MenuItem? = null
-    var deleteItem: MenuItem? = null
-
-    private var selectedItem = selectedIndexInvalid
 
     companion object {
         var database: AppDatabase? = null
@@ -61,32 +55,6 @@ class MainActivity : AppCompatActivity(), NewFolderDialogFragment.NewFolderDialo
 
         populateListView()
 
-        listView?.onItemLongClickListener = AdapterView.OnItemLongClickListener(function = { parent, view, position, id ->
-
-            if (selectedItem == position) {
-
-                clearSelected()
-                hideMenu()
-            } else {
-                listView?.setSelector(android.R.color.holo_blue_light)
-                showUpdateUI(position)
-                showUpdateUI(position)
-            }
-        })
-
-        listView?.onItemClickListener = AdapterView.OnItemClickListener(function = { parent, view, position, id ->
-
-            // open folder detail screen
-            val intent = Intent(this, FolderDetailActivity::class.java)
-            var folderId = this.todoListFolders[position].folderId!!
-
-            intent.putExtra(FolderDetailActivity.folderIdExtraKey, folderId)
-            startActivity(intent)
-
-            clearSelected()
-            hideMenu()
-        })
-
         fab.setOnClickListener {
             showNewUI()
         }
@@ -96,7 +64,40 @@ class MainActivity : AppCompatActivity(), NewFolderDialogFragment.NewFolderDialo
         todoListFolders =
             RetrieveFoldersAsyncTask(database).execute().get() as ArrayList<Folder>
 
-        listAdapter = FolderListAdapter(this, todoListFolders)
+        val listener = object : FolderAdapterListener {
+
+            override fun onClick(folder: Folder) {
+                // open folder detail screen
+                val intent = Intent(this@MainActivity, FolderDetailActivity::class.java)
+                var folderId = folder.folderId!!
+
+                intent.putExtra(FolderDetailActivity.folderIdExtraKey, folderId)
+                startActivity(intent)
+
+                clearSelected()
+            }
+
+            override fun onClickEdit(folder: Folder) {
+                val fragment =
+                    NewFolderDialogFragment.newInstance(
+                        R.string.update_folder_dialog_title, folder
+                    )
+                fragment.show(fm, updateFolderFragmentTag)
+            }
+
+            override fun onClickDelete(folder: Folder) {
+                DeleteFolderAsyncTask(database, folder).execute()
+
+                todoListFolders.remove(folder)
+                listAdapter?.notifyDataSetChanged()
+
+                // reset
+                clearSelected()
+
+                showSnackbarMessage(resources.getString(R.string.text_deleted_done), "Action")
+            }
+        }
+        listAdapter = FolderListAdapter(this, todoListFolders, listener)
         listView?.adapter = listAdapter
     }
 
@@ -106,87 +107,16 @@ class MainActivity : AppCompatActivity(), NewFolderDialogFragment.NewFolderDialo
         fragment.show(fm, newFolderFragmentTag)
     }
 
-    private fun showUpdateUI(selected: Int): Boolean {
-        selectedItem = selected
-        switchMenuMode(1)
-        invalidateOptionsMenu()
-        return true
-    }
-
-    private fun switchMenuMode(mode: Int) {
-        if (mode == 0) { // normal
-            editItem?.isVisible = false
-            deleteItem?.isVisible = false
-        } else if (mode == 1) { // edit mode
-
-            editItem?.isVisible = true
-            deleteItem?.isVisible = true
-        }
-    }
-
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
 
-        val inflater = menuInflater
-        inflater.inflate(R.menu.folder_list_menu, menu)
-
-        editItem = menu.findItem(R.id.edit_item)
-        deleteItem = menu.findItem(R.id.delete_item)
-
-        if (selectedItem == selectedIndexInvalid) {
-            switchMenuMode(0)
-        } else {
-            switchMenuMode(1)
-        }
-
         return true
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        return when (item.itemId) {
-            R.id.edit_item -> {
-                val fragment =
-                    NewFolderDialogFragment.newInstance(
-                        R.string.update_folder_dialog_title,
-                        todoListFolders[selectedItem]
-                    )
-                fragment.show(fm, updateFolderFragmentTag)
-                return true
-            }
-            R.id.delete_item -> {
-                val selectedTask = todoListFolders[selectedItem]
-                DeleteFolderAsyncTask(database, selectedTask).execute()
-
-                todoListFolders.removeAt(selectedItem)
-                listAdapter?.notifyDataSetChanged()
-
-                // reset
-                clearSelected()
-
-                showSnackbarMessage(resources.getString(R.string.text_deleted_done), "Action")
-
-                hideMenu()
-                return true
-            }
-
-            else -> super.onOptionsItemSelected(item)
-        }
     }
 
     private fun showSnackbarMessage(text: String, action: String) {
         Snackbar.make(fab, text, Snackbar.LENGTH_LONG).setAction(action, null).show()
     }
 
-    private fun hideMenu(): Boolean {
-        switchMenuMode(0)
-        invalidateOptionsMenu()
-        return true
-    }
-
     private fun clearSelected() {
-        selectedItem = selectedIndexInvalid
         listView?.setSelector(android.R.color.transparent)
     }
 
@@ -208,11 +138,9 @@ class MainActivity : AppCompatActivity(), NewFolderDialogFragment.NewFolderDialo
 
             clearSelected()
 
-            hideMenu()
-
             showSnackbarMessage(resources.getString(R.string.text_created_done), "Action")
         } else if (dialog.tag == updateFolderFragmentTag) {
-            todoListFolders[selectedItem] = folder
+//            todoListFolders[selectedItem] = folder
 
             UpdateFolderAsyncTask(database, folder).execute()
 
@@ -221,7 +149,6 @@ class MainActivity : AppCompatActivity(), NewFolderDialogFragment.NewFolderDialo
             showSnackbarMessage(resources.getString(R.string.text_updated_done), "Action")
 
             clearSelected()
-            hideMenu()
         }
     }
 

@@ -1,7 +1,7 @@
 package com.flinders.nguy1025.grouptasklist.Models
 
-import android.arch.persistence.room.*
 import android.provider.BaseColumns
+import androidx.room.*
 import java.io.Serializable
 import java.util.*
 
@@ -9,7 +9,9 @@ import java.util.*
     , foreignKeys = arrayOf(
         ForeignKey(entity = Folder::class,
         parentColumns = arrayOf(BaseColumns._ID),
-        childColumns = arrayOf(TodoListDBContract.TodoListItem.COLUMN_NAME_FOLDER_ID), onDelete = ForeignKey.CASCADE))
+            childColumns = arrayOf(TodoListDBContract.TodoListItem.COLUMN_NAME_FOLDER_ID), onDelete = ForeignKey.CASCADE
+        )
+    )
 )
 class Task : Serializable {
 

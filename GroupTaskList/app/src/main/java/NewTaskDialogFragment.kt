@@ -4,16 +4,16 @@ import android.app.Activity
 import android.app.AlertDialog
 import android.app.Dialog
 import android.app.TimePickerDialog
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
 import android.os.Bundle
-import android.support.v4.app.ActivityCompat
-import android.support.v4.app.DialogFragment
-import android.support.v4.app.Fragment
-import android.support.v4.content.ContextCompat
 import android.util.Log
 import android.widget.*
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.DialogFragment
 import com.flinders.nguy1025.grouptasklist.Activities.MapsActivity
 import com.flinders.nguy1025.grouptasklist.Models.Task
 import com.flinders.nguy1025.grouptasklist.R
@@ -166,16 +166,16 @@ class NewTaskDialogFragment : DialogFragment() {
     }
 
     private fun updateGPSText() {
-        tvGPS?.setText(task?.coordinateString())
+        tvGPS?.text = task?.coordinateString()
     }
 
     private fun updateDeadlineText() {
-        tvDeadline?.setText(this.task?.getDeadlineDate().toString())
+        tvDeadline?.text = this.task?.getDeadlineDate()?.toString()
     }
 
     private fun openImagePicker() {
         EasyImage.openChooserWithGallery(
-            this as Fragment,
+            activity as Activity,
             resources.getString(R.string.image_select), 0)
     }
 
@@ -253,8 +253,8 @@ class NewTaskDialogFragment : DialogFragment() {
 
     }
 
-    override fun onAttach(activity: Activity?) {
-        super.onAttach(activity)
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
 
         try {
             newTaskDialogListener = activity as NewTaskDialogListener

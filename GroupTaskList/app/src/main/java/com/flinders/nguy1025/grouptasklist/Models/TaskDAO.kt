@@ -1,7 +1,6 @@
 package com.flinders.nguy1025.grouptasklist.Models
 
-import android.arch.persistence.room.*
-
+import androidx.room.*
 
 @Dao
 interface TaskDAO {

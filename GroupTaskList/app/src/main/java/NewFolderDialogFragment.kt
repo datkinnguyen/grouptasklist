@@ -1,9 +1,9 @@
-import android.app.Activity
 import android.app.AlertDialog
 import android.app.Dialog
+import android.content.Context
 import android.os.Bundle
-import android.support.v4.app.DialogFragment
 import android.widget.EditText
+import androidx.fragment.app.DialogFragment
 import com.flinders.nguy1025.grouptasklist.Models.Folder
 import com.flinders.nguy1025.grouptasklist.R
 
@@ -73,8 +73,8 @@ class NewFolderDialogFragment : DialogFragment() {
         return builder.create()
     }
 
-    override fun onAttach(activity: Activity?) {
-        super.onAttach(activity)
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
 
         try {
             newTaskDialogListener = activity as NewFolderDialogListener

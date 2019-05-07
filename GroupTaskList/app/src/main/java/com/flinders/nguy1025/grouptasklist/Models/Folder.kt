@@ -1,10 +1,10 @@
 package com.flinders.nguy1025.grouptasklist.Models
 
-import android.arch.persistence.room.ColumnInfo
-import android.arch.persistence.room.Entity
-import android.arch.persistence.room.Ignore
-import android.arch.persistence.room.PrimaryKey
 import android.provider.BaseColumns
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.Ignore
+import androidx.room.PrimaryKey
 import java.io.Serializable
 
 @Entity(tableName = TodoListDBContract.TodoListFolder.TABLE_NAME)

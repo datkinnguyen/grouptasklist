@@ -1,14 +1,8 @@
 package com.flinders.nguy1025.grouptasklist;
 
-import android.app.Application;
-import android.content.Context;
-import android.support.multidex.MultiDex;
+import androidx.multidex.MultiDexApplication;
 
-public class MyApplication extends Application {
+public class MyApplication extends MultiDexApplication {
 
-    @Override
-    protected void attachBaseContext(Context base) {
-        super.attachBaseContext(base);
-        MultiDex.install(this);
-    }
+
 }
