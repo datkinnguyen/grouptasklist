@@ -113,8 +113,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                 lastLocation = LatLng(location.latitude, location.longitude)
             }
 
-            val currentLatLng = LatLng(location.latitude, location.longitude)
-            addMarkerToMap(currentLatLng)
+            if (lastLocation != null) {
+                val currentLatLng = LatLng(lastLocation!!.latitude, lastLocation!!.longitude)
+                addMarkerToMap(currentLatLng)
+            }
         }
     }
 
