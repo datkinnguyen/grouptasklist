@@ -43,6 +43,9 @@ class FolderDetailActivity : AppCompatActivity() {
         setContentView(R.layout.activity_folder_detail)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
+        // try to get folderId for update state
+        this.folderId = intent.getLongExtra(folderIdExtraKey, 0)
+
         // find views
         listView = findViewById(R.id.list_view)
 
@@ -64,9 +67,9 @@ class FolderDetailActivity : AppCompatActivity() {
 
         if (task != null) {
             intent.putExtra(TaskRecordActivity.argTask, task)
-            intent.putExtra(TaskRecordActivity.argMode, mode)
         }
 
+        intent.putExtra(TaskRecordActivity.argMode, mode)
         intent.putExtra(TaskRecordActivity.argFolderId, this.folderId)
 
         startActivity(intent)
@@ -75,8 +78,6 @@ class FolderDetailActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
 
-        // try to get folderId for update state
-        this.folderId = intent.getLongExtra(folderIdExtraKey, 0)
         if (this.folderId > 0) {
             // load folder
             this.folder =

@@ -76,6 +76,11 @@ class TaskRecordActivity : AppCompatActivity() {
 
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
+        // load data
+        this.folderId = intent?.getLongExtra(argFolderId, 0)
+        this.mode = intent?.getSerializableExtra(argMode) as RecordMode
+        this.task = intent?.getSerializableExtra(argTask) as Task?
+
         configUIEvents()
     }
 
@@ -163,11 +168,6 @@ class TaskRecordActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-
-        // load data
-        this.folderId = intent?.getLongExtra(argFolderId, 0)
-        this.mode = intent?.getSerializableExtra(argMode) as RecordMode
-        this.task = intent?.getSerializableExtra(argTask) as Task?
 
         if (this.task != null) {
             refreshData()
