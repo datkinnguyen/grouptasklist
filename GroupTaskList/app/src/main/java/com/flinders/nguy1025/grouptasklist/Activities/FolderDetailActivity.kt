@@ -48,7 +48,7 @@ class FolderDetailActivity : AppCompatActivity() {
 
         listView?.onItemClickListener = AdapterView.OnItemClickListener { parent, view, position, id ->
 
-            openAddEditTaskScreen(todoListItems[position])
+            openAddEditTaskScreen(todoListItems[position], TaskRecordActivity.RecordMode.VIEW)
         }
 
         fab_folder_detail.setOnClickListener {
@@ -58,13 +58,13 @@ class FolderDetailActivity : AppCompatActivity() {
         populateListView()
     }
 
-    private fun openAddEditTaskScreen(task: Task?) {
+    private fun openAddEditTaskScreen(task: Task?, mode: TaskRecordActivity.RecordMode) {
 
         val intent = Intent(this, TaskRecordActivity::class.java)
 
         if (task != null) {
             intent.putExtra(TaskRecordActivity.argTask, task)
-            intent.putExtra(TaskRecordActivity.argMode, TaskRecordActivity.RecordMode.VIEW)
+            intent.putExtra(TaskRecordActivity.argMode, mode)
         }
 
         intent.putExtra(TaskRecordActivity.argFolderId, this.folderId)
@@ -107,11 +107,11 @@ class FolderDetailActivity : AppCompatActivity() {
         val listener = object : TaskAdapterListener {
 
             override fun onClick(task: Task) {
-                openAddEditTaskScreen(task)
+                openAddEditTaskScreen(task, TaskRecordActivity.RecordMode.VIEW)
             }
 
             override fun onClickEdit(task: Task) {
-                openAddEditTaskScreen(task)
+                openAddEditTaskScreen(task, TaskRecordActivity.RecordMode.EDIT)
             }
 
             override fun onClickDelete(task: Task) {
@@ -178,7 +178,7 @@ class FolderDetailActivity : AppCompatActivity() {
     }
 
     private fun showNewTaskUI() {
-        openAddEditTaskScreen(null)
+        openAddEditTaskScreen(null, TaskRecordActivity.RecordMode.ADD)
     }
 
     private fun updateHideCompletedItem() {

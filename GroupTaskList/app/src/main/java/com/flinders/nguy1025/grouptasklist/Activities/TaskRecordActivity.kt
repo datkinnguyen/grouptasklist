@@ -164,16 +164,16 @@ class TaskRecordActivity : AppCompatActivity() {
 
         // load data
         this.folderId = intent?.getLongExtra(argFolderId, 0)
+        this.mode = intent?.getSerializableExtra(argMode) as RecordMode
         this.task = intent?.getSerializableExtra(argTask) as Task?
 
         if (this.task != null) {
             refreshData()
-
-            switchMode(RecordMode.VIEW)
         } else {
             this.task = Task("", 0)
-            switchMode(RecordMode.ADD)
         }
+
+        switchMode(this.mode)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {

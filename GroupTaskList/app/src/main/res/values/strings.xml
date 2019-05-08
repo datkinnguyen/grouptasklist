@@ -5,7 +5,7 @@
     <string name="save">Save</string>
     <string name="delete">Delete</string>
 
-    <string name="view_task_dialog_title">Task Details</string>
+    <string name="view_task_dialog_title">View Task</string>
     <string name="add_new_task_dialog_title">Add New Task</string>
     <string name="update_task_dialog_title">Edit Task</string>
 
