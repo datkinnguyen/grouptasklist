@@ -5,12 +5,12 @@
             android:id="@+id/edit_item"
             android:title="@string/edit"
             android:icon="@drawable/ic_edit"
-            android:visible="false"
+            android:visible="true"
             app:showAsAction="always"/>
     <item
             android:id="@+id/delete_item"
             android:title="@string/delete"
             android:icon="@drawable/ic_delete"
-            android:visible="false"
+            android:visible="true"
             app:showAsAction="always"/>
 </menu>

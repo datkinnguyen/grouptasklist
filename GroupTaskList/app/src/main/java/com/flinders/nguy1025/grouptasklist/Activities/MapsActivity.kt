@@ -5,6 +5,7 @@ import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.flinders.nguy1025.grouptasklist.R
@@ -40,6 +41,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.maps_activity)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
@@ -103,6 +105,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
     }
 
     @SuppressLint("MissingPermission")
+    /**
+     *  Configure maps to show current location and observe location updates.
+     *  Courtesy of https://developer.android.com/training/location/receive-location-updates.html
+     */
     private fun setUpMap() {
 
         mMap.isMyLocationEnabled = true
@@ -137,6 +143,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         return true
     }
 
+    /**
+     * Create a markerOptions object from latLng object, to be used to add to Google Maps
+     */
     private fun markerFromLatLng(latLng: LatLng): MarkerOptions {
         return MarkerOptions().position(latLng).draggable(true).snippet("Coordinate: $latLng")
 
@@ -151,7 +160,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         lastMarker = mMap.addMarker(markerFromLatLng(latLng))
         val cu = CameraUpdateFactory.newLatLngZoom(latLng, 12f)
         mMap.animateCamera(cu)
-
     }
 
     private fun updateCoordinateText() {
@@ -180,6 +188,20 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 
         }
 
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        return when (item.itemId) {
+            android.R.id.home -> {
+                // dismiss this screen
+                finish()
+                return true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
     }
 
 }

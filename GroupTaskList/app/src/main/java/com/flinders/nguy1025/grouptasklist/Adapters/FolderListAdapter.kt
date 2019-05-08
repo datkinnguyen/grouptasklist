@@ -18,7 +18,7 @@ class FolderListAdapter(
     private val folderAdapterListener: FolderAdapterListener
 ) : BaseAdapter() {
 
-    val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+    private val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
 
     override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View? {
 
@@ -61,6 +61,10 @@ class FolderListAdapter(
         return folderList.size
     }
 
+    /**
+     * Show menus right at the position where user taps.
+     * Used open-source MaterialPopupMenu https://github.com/zawadz88/MaterialPopupMenu
+     */
     fun showOptionsMenu(view: View, folder: Folder) {
         val popupMenu = popupMenu {
             section {

@@ -23,10 +23,4 @@ interface FolderDAO {
     @Query("SELECT * FROM " + TodoListDBContract.TodoListItem.TABLE_NAME + " WHERE " + TodoListDBContract.TodoListItem.COLUMN_NAME_FOLDER_ID + " = :folderId")
     fun getTasks(folderId: Long): List<Task>
 
-//    fun getFolderWithTasks(id: Long): Folder {
-//        val folder = getFolder(id)
-//        val tasks = getTasks(id)
-//        folder.tasks = tasks
-//        return folder
-//    }
 }

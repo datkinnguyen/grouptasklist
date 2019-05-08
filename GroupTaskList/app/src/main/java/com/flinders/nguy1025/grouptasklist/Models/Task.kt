@@ -13,6 +13,9 @@ import java.util.*
         )
     ), indices = arrayOf(Index(value = [TodoListDBContract.TodoListItem.COLUMN_NAME_FOLDER_ID]))
 )
+/**
+ * Courtesy of https://developer.android.com/training/data-storage/room/defining-data for defining foreign keys and indices
+ */
 class Task : Serializable {
 
     @PrimaryKey(autoGenerate = true)
@@ -56,14 +59,6 @@ class Task : Serializable {
         this.notes = notes
         this.completed = completed
         this.deadline = deadline
-    }
-
-    /**
-     * Set coordinate (latitude, longitude) of task
-     */
-    fun updateCoordinate(lat: Double, long: Double) {
-        this.latitude = lat
-        this.longitude = long
     }
 
     fun coordinateDoubleArray() :  DoubleArray? {

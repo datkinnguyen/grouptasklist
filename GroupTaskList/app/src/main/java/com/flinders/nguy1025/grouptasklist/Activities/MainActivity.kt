@@ -1,6 +1,7 @@
 package com.flinders.nguy1025.grouptasklist.Activities
 
 import NewFolderDialogFragment
+import android.content.DialogInterface
 import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
@@ -40,6 +41,7 @@ class MainActivity : AppCompatActivity(), NewFolderDialogFragment.NewFolderDialo
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        supportActionBar?.title = resources.getString(R.string.folders_list_title)
 
         database = Room.databaseBuilder(applicationContext, AppDatabase::class.java, TodoListDBContract.DATABASE_NAME)
             .addMigrations(object :
@@ -98,15 +100,29 @@ class MainActivity : AppCompatActivity(), NewFolderDialogFragment.NewFolderDialo
             }
 
             override fun onClickDelete(folder: Folder) {
-                DBTasksHelper.DeleteFolderAsyncTask(database, folder).execute()
 
-                todoListFolders.remove(folder)
-                listAdapter?.notifyDataSetChanged()
+                // confirm before actually delete data
+                Utilities.showSimpleDialog(
+                    this@MainActivity,
+                    resources.getString(R.string.delete_confirm_title),
+                    resources.getString(R.string.delete_confirm_message),
+                    resources.getString(R.string.text_yes),
+                    DialogInterface.OnClickListener { dialog, which ->
 
-                // reset
-                clearSelected()
+                        DBTasksHelper.DeleteFolderAsyncTask(database, folder).execute()
 
-                Utilities.showToast(this@MainActivity, R.string.text_deleted_done)
+                        todoListFolders.remove(folder)
+                        listAdapter?.notifyDataSetChanged()
+
+                        // reset
+                        clearSelected()
+
+                        Utilities.showToast(this@MainActivity, R.string.text_deleted_done)
+                    },
+                    resources.getString(R.string.text_no),
+                    null
+                )
+
             }
         }
         listAdapter = FolderListAdapter(this, todoListFolders, listener)

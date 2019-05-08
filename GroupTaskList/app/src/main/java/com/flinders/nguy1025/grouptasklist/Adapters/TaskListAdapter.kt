@@ -1,13 +1,15 @@
 package com.flinders.nguy1025.grouptasklist.Adapters
 
 import android.content.Context
+import android.content.res.ColorStateList
+import android.graphics.Paint
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.BaseAdapter
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.core.content.res.ResourcesCompat
+import androidx.core.widget.ImageViewCompat
 import com.flinders.nguy1025.grouptasklist.Models.Task
 import com.flinders.nguy1025.grouptasklist.R
 import com.github.zawadz88.materialpopupmenu.popupMenu
@@ -33,8 +35,8 @@ class TaskListAdapter(
                 view.findViewById(R.id.task_item_description)
             viewHolder.notesTextView = view.findViewById(R.id.tv_notes)
             viewHolder.deadlineTextView = view.findViewById(R.id.tv_deadline)
-            viewHolder.statusTextView = view.findViewById(R.id.task_item_status)
             viewHolder.btnOptions = view.findViewById(R.id.btn_option)
+            viewHolder.imvCompleted = view.findViewById(R.id.imv_completed)
             view.tag = viewHolder
 
         } else {
@@ -48,6 +50,13 @@ class TaskListAdapter(
 
         viewHolder?.btnOptions?.setOnClickListener { view -> showOptionsMenu(view, task) }
 
+        viewHolder?.imvCompleted?.setOnClickListener { v ->
+            run {
+
+                taskAdapterListener.onClickComplete(task)
+            }
+        }
+
         if (task.getDeadlineDate() != null) {
             var passDeadline = ""
             if (task.getDeadlineDate() != null && Date().after(task.getDeadlineDate())) {
@@ -58,19 +67,23 @@ class TaskListAdapter(
             viewHolder?.deadlineTextView?.text = null
         }
 
+        // update completed status
         if (null != task.completed && true == task.completed) {
-            viewHolder?.statusTextView?.text = (context.getString(R.string.completed))
-            viewHolder?.statusTextView?.setTextColor(
-                ResourcesCompat.getColor(
-                    context.resources, android.R.color.holo_green_light, null
-                )
+
+            viewHolder?.taskDescriptionTextView?.paintFlags = Paint.STRIKE_THRU_TEXT_FLAG
+
+            viewHolder?.imvCompleted?.setImageResource(R.drawable.ic_checkmark)
+            ImageViewCompat.setImageTintList(
+                viewHolder?.imvCompleted!!,
+                ColorStateList.valueOf(context.resources.getColor(R.color.colorPrimary))
             )
         } else {
-            viewHolder?.statusTextView?.text = (context.getString(R.string.not_completed))
-            viewHolder?.statusTextView?.setTextColor(
-                ResourcesCompat.getColor(
-                    context.resources, android.R.color.holo_red_light, null
-                )
+            viewHolder?.taskDescriptionTextView?.paintFlags = Paint.LINEAR_TEXT_FLAG
+
+            viewHolder?.imvCompleted?.setImageResource(R.drawable.ic_checkmark_empty)
+            ImageViewCompat.setImageTintList(
+                viewHolder?.imvCompleted!!,
+                ColorStateList.valueOf(context.resources.getColor(R.color.colorAccent))
             )
         }
 
@@ -92,22 +105,6 @@ class TaskListAdapter(
     fun showOptionsMenu(view: View, task: Task) {
         val popupMenu = popupMenu {
             section {
-                item {
-                    labelRes = if (task.completed == false) {
-                        R.string.mark_as_done
-                    } else {
-                        R.string.mark_as_not_done
-                    }
-                    icon = if (task.completed == false) {
-                        R.drawable.check
-                    } else {
-                        R.drawable.check_box_empty
-                    }
-                    callback = {
-                        //optional
-                        taskAdapterListener.onClickComplete(task)
-                    }
-                }
                 item {
                     labelRes = R.string.edit
                     icon = android.R.drawable.ic_menu_edit
@@ -132,9 +129,9 @@ class TaskListAdapter(
 
     private class ViewHolder {
         var btnOptions: ImageView? = null
+        var imvCompleted: ImageView? = null
         var taskDescriptionTextView: TextView? = null
         var deadlineTextView: TextView? = null
         var notesTextView: TextView? = null
-        var statusTextView: TextView? = null
     }
 }

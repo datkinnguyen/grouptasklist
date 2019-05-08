@@ -1,5 +1,6 @@
 package com.flinders.nguy1025.grouptasklist.Activities
 
+import android.content.DialogInterface
 import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
@@ -9,7 +10,6 @@ import android.widget.ListView
 import androidx.appcompat.app.AppCompatActivity
 import com.flinders.nguy1025.grouptasklist.Adapters.TaskAdapterListener
 import com.flinders.nguy1025.grouptasklist.Adapters.TaskListAdapter
-import com.flinders.nguy1025.grouptasklist.Models.AppDatabase
 import com.flinders.nguy1025.grouptasklist.Models.DBTasksHelper
 import com.flinders.nguy1025.grouptasklist.Models.Folder
 import com.flinders.nguy1025.grouptasklist.Models.Task
@@ -35,17 +35,13 @@ class FolderDetailActivity : AppCompatActivity() {
             field = value; updateHideCompletedItem()
         }
 
-    private var database: AppDatabase? = null
-
     private var folderId: Long = Long.MIN_VALUE
     private var folder: Folder? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_folder_detail)
-
-        // point to database object in MainActivity
-        database = MainActivity.database
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         // find views
         listView = findViewById(R.id.list_view)
@@ -64,13 +60,14 @@ class FolderDetailActivity : AppCompatActivity() {
 
     private fun openAddEditTaskScreen(task: Task?) {
 
-        val intent = Intent(this, NewTaskActivity::class.java)
+        val intent = Intent(this, TaskRecordActivity::class.java)
 
         if (task != null) {
-            intent.putExtra(NewTaskActivity.argTask, task)
+            intent.putExtra(TaskRecordActivity.argTask, task)
+            intent.putExtra(TaskRecordActivity.argMode, TaskRecordActivity.RecordMode.VIEW)
         }
 
-        intent.putExtra(NewTaskActivity.argFolderId, this.folderId)
+        intent.putExtra(TaskRecordActivity.argFolderId, this.folderId)
 
         startActivity(intent)
     }
@@ -82,13 +79,26 @@ class FolderDetailActivity : AppCompatActivity() {
         this.folderId = intent.getLongExtra(folderIdExtraKey, 0)
         if (this.folderId > 0) {
             // load folder
-            this.folder = DBTasksHelper.RetrieveFolderAsyncTask(database, folderId).execute().get() as Folder
+            this.folder =
+                DBTasksHelper.RetrieveFolderAsyncTask(MainActivity.database, folderId).execute().get() as Folder
             // update title
             supportActionBar?.title = this.folder?.name
         }
 
         // load data
         forceReloadData()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+
+        // save edit mode state
+        outState.putSerializable(folderIdExtraKey, this.folderId)
+    }
+
+    override fun onRestoreInstanceState(savedInstanceState: Bundle?) {
+        super.onRestoreInstanceState(savedInstanceState)
+        this.folderId = savedInstanceState?.getLong(folderIdExtraKey) as Long
     }
 
     private fun populateListView() {
@@ -105,22 +115,34 @@ class FolderDetailActivity : AppCompatActivity() {
             }
 
             override fun onClickDelete(task: Task) {
-                DBTasksHelper.DeleteTaskAsyncTask(database, task).execute()
 
-                todoListItems.remove(task)
-                listAdapter?.notifyDataSetChanged()
+                // confirm before actually delete data
+                Utilities.showSimpleDialog(
+                    this@FolderDetailActivity,
+                    resources.getString(R.string.delete_confirm_title),
+                    resources.getString(R.string.delete_confirm_message),
+                    resources.getString(R.string.text_yes),
+                    DialogInterface.OnClickListener { dialog, which ->
+                        DBTasksHelper.DeleteTaskAsyncTask(MainActivity.database, task).execute()
 
-                // reset
-                clearSelected()
+                        todoListItems.remove(task)
+                        listAdapter?.notifyDataSetChanged()
 
-                Utilities.showToast(this@FolderDetailActivity, R.string.text_deleted_done)
+                        // reset
+                        clearSelected()
+
+                        Utilities.showToast(this@FolderDetailActivity, R.string.text_deleted_done)
+                    },
+                    resources.getString(R.string.text_no),
+                    null
+                )
             }
 
             override fun onClickComplete(task: Task) {
                 // Assume we allow un-done task
                 task.completed = task.completed?.not()
 
-                DBTasksHelper.UpdateTaskAsyncTask(database, task).execute()
+                DBTasksHelper.UpdateTaskAsyncTask(MainActivity.database, task).execute()
 
                 // reload whole data to hide newly completed one
                 if (hideCompleted == true && task.completed == true) {
@@ -139,6 +161,20 @@ class FolderDetailActivity : AppCompatActivity() {
 
         listAdapter = TaskListAdapter(this, todoListItems, listener)
         listView?.adapter = listAdapter
+    }
+
+    private fun forceReloadData() {
+        todoListItems.clear()
+        todoListItems.addAll(
+            DBTasksHelper.RetrieveTasksAsyncTask(
+                MainActivity.database, folderId, hideCompleted
+            ).execute().get() as ArrayList<Task>
+        )
+        listAdapter?.notifyDataSetChanged()
+    }
+
+    private fun clearSelected() {
+        listView?.setSelector(android.R.color.transparent)
     }
 
     private fun showNewTaskUI() {
@@ -182,22 +218,13 @@ class FolderDetailActivity : AppCompatActivity() {
 
                 return true
             }
+            android.R.id.home -> {
+                // dismiss this screen
+                finish()
+                return true
+            }
             else -> super.onOptionsItemSelected(item)
         }
-    }
-
-    private fun forceReloadData() {
-        todoListItems.clear()
-        todoListItems.addAll(
-            DBTasksHelper.RetrieveTasksAsyncTask(
-                database, folderId, hideCompleted
-            ).execute().get() as ArrayList<Task>
-        )
-        listAdapter?.notifyDataSetChanged()
-    }
-
-    private fun clearSelected() {
-        listView?.setSelector(android.R.color.transparent)
     }
 
 }

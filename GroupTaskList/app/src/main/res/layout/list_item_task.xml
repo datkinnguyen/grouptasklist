@@ -1,48 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:padding="@dimen/fab_margin">
 
-    <TextView android:id="@+id/task_item_description"
-              android:layout_width="wrap_content"
-              android:layout_height="wrap_content"
-              android:text="@string/task"
-              android:textSize="18sp"
-              android:layout_alignParentLeft="true"
-              android:layout_alignParentStart="true"/>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:orientation="horizontal"
+              android:padding="@dimen/fab_margin">
 
-    <TextView android:id="@+id/tv_deadline"
-              android:layout_width="wrap_content"
-              android:layout_height="wrap_content"
-              android:textSize="14sp"
-              android:text="@string/deadline"
-              android:layout_below="@id/task_item_description"/>
+    <ImageView android:layout_width="50dp"
+               android:layout_height="50dp"
+               android:id="@+id/imv_completed"
+               android:paddingRight="10dp"
+               android:layout_gravity="center_vertical"
+               android:src="@drawable/ic_checkmark_empty"/>
 
-    <TextView android:id="@+id/tv_notes"
-              android:layout_width="wrap_content"
-              android:layout_height="wrap_content"
-              android:textSize="14sp"
-              android:text="notes"
-              android:layout_below="@id/tv_deadline"/>
+    <RelativeLayout android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1.0"
+                    android:layout_gravity="center_vertical"
+                    android:gravity="center_vertical">
 
-    <TextView android:id="@+id/task_item_status"
-              android:layout_width="wrap_content"
-              android:layout_height="wrap_content"
-              android:text="@string/completed"
-              android:textSize="16sp"
-              android:layout_toLeftOf="@id/btn_option"
-              android:layout_toStartOf="@id/btn_option"
-              android:textColor="@android:color/holo_green_light"/>
+        <TextView android:id="@+id/task_item_description"
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:text="@string/task"
+                  android:textStyle="bold"
+                  android:textSize="18sp"
+                  android:maxLines="2"
+                  android:ellipsize="end"
+                  android:layout_alignParentLeft="true"
+                  android:layout_alignParentStart="true"/>
+
+        <TextView android:id="@+id/tv_deadline"
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:textSize="14sp"
+                  android:text="@string/deadline"
+                  android:visibility="gone"
+                  android:layout_below="@id/task_item_description"/>
+
+        <TextView android:id="@+id/tv_notes"
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:textSize="14sp"
+                  android:maxLines="1"
+                  android:ellipsize="end"
+                  android:text="notes"
+                  android:layout_below="@id/tv_deadline"/>
+
+    </RelativeLayout>
 
     <ImageView android:id="@+id/btn_option"
                android:layout_width="60dp"
                android:layout_height="70dp"
-               android:paddingLeft="30dp"
-               android:layout_alignParentRight="true"
-               android:layout_alignParentEnd="true"
-               android:layout_centerVertical="true"
-               android:scaleType="centerInside"
+               android:paddingTop="20dp"
+               android:paddingBottom="20dp"
+               android:scaleType="fitEnd"
+               android:layout_gravity="center_vertical"
                android:src="@drawable/ic_threedots"/>
 
-</RelativeLayout>
+</LinearLayout>

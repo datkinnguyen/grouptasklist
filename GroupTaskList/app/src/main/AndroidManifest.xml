@@ -23,9 +23,21 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".Activities.MapsActivity"></activity>
-        <activity android:name=".Activities.FolderDetailActivity"></activity>
-        <activity android:name=".Activities.NewTaskActivity"/>
+        <activity android:name=".Activities.MapsActivity">
+            <meta-data
+                    android:name="android.support.PARENT_ACTIVITY"
+                    android:value=".Activities.TaskRecordActivity"/>
+        </activity>
+        <activity android:name=".Activities.FolderDetailActivity">
+            <meta-data
+                    android:name="android.support.PARENT_ACTIVITY"
+                    android:value=".Activities.MainActivity"/>
+        </activity>
+        <activity android:name=".Activities.TaskRecordActivity">
+            <meta-data
+                    android:name="android.support.PARENT_ACTIVITY"
+                    android:value=".Activities.FolderDetailActivity"/>
+        </activity>
 
         <provider
                 android:name=".EasyFileProvider"
