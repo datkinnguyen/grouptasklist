@@ -3,6 +3,7 @@ package com.flinders.nguy1025.grouptasklist.Models
 import android.provider.BaseColumns
 import androidx.room.*
 import java.io.Serializable
+import java.text.DateFormat
 import java.util.*
 
 @Entity(tableName = TodoListDBContract.TodoListItem.TABLE_NAME
@@ -81,6 +82,17 @@ class Task : Serializable {
 
     fun getDeadlineDate() : Date? {
         return this.deadline?.let { Date(it) }
+    }
+
+    fun getDeadlineDateString(): String? {
+        if (this.deadline != null) {
+
+            val formatter = DateFormat.getDateInstance()
+            return formatter.format(Date(this.deadline!!))
+        }
+
+        return null
+
     }
 
 

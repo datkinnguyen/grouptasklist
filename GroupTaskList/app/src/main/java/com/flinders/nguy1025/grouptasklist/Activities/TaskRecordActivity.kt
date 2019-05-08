@@ -3,13 +3,14 @@ package com.flinders.nguy1025.grouptasklist.Activities
 import android.Manifest.permission.CAMERA
 import android.Manifest.permission.READ_EXTERNAL_STORAGE
 import android.app.Activity
-import android.app.TimePickerDialog
+import android.app.DatePickerDialog
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.graphics.BitmapFactory
 import android.graphics.Paint
+import android.graphics.Typeface
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
@@ -142,17 +143,18 @@ class TaskRecordActivity : AppCompatActivity() {
                 c.time = date
 
                 val timePicker =
-                    TimePickerDialog(this, TimePickerDialog.OnTimeSetListener { view, hourOfDay, minute ->
+                    DatePickerDialog(this, DatePickerDialog.OnDateSetListener { view, year, month, dayOfMonth ->
 
                         var currentDate = Date()
                         c.time = currentDate
-                        c.set(Calendar.HOUR_OF_DAY, hourOfDay)
-                        c.set(Calendar.MINUTE, minute)
+                        c.set(Calendar.YEAR, year)
+                        c.set(Calendar.MONTH, month)
+                        c.set(Calendar.DAY_OF_MONTH, dayOfMonth)
 
                         this.task?.deadline = c.time.time
                         updateDeadlineText()
 
-                    }, c.get(Calendar.HOUR_OF_DAY), c.get(Calendar.MINUTE), true)
+                    }, c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH))
 
                 timePicker.show()
             }
@@ -327,11 +329,19 @@ class TaskRecordActivity : AppCompatActivity() {
 
     private fun updateDeadlineText() {
         if (this.task?.getDeadlineDate() != null) {
-            tvDeadline?.text = this.task?.getDeadlineDate()?.toString()
-            tvDeadline?.setTextColor(ColorStateList.valueOf(resources.getColor(R.color.colorDueText)))
+            tvDeadline?.text = this.task?.getDeadlineDateString()
+            // change color if deadline date passes already
+            if (this.task?.getDeadlineDate()!!.after(Date())) {
+                tvDeadline?.setTextColor(ColorStateList.valueOf(resources.getColor(R.color.colorTextNormal)))
+                tvDeadline?.setTypeface(null, Typeface.NORMAL)
+            } else {
+                tvDeadline?.setTextColor(ColorStateList.valueOf(resources.getColor(R.color.colorDueText)))
+                tvDeadline?.setTypeface(null, Typeface.BOLD)
+            }
         } else {
             tvDeadline?.text = resources.getString(R.string.add_due_date)
             tvDeadline?.setTextColor(ColorStateList.valueOf(resources.getColor(R.color.colorTextNormal)))
+            tvDeadline?.setTypeface(null, Typeface.NORMAL)
         }
     }
 
